@@ -1,7 +1,7 @@
 <?php
-$servername = "sensor.cxkk2guqqpwa.ap-southeast-1.rds.amazonaws.com"; // Replace with your RDS endpoint
-$username = "keshaka";                // RDS username
-$password = "alohomora";                // RDS password
+$servername = ""; // Replace with your RDS endpoint
+$username = "";                // RDS username
+$password = "";                // RDS password
 $dbname = "sensor_data";                 // Your database name
 
 // Connect to RDS database
