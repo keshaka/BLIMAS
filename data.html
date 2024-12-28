@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sensor Data</title>
+  <script>
+    async function fetchData() {
+      const response = await fetch('sensor_data.txt');
+      const data = await response.text();
+      document.getElementById('data').innerText = data;
+    }
+
+    setInterval(fetchData, 5000); // Refresh data every 5 seconds
+  </script>
+</head>
+<body onload="fetchData()">
+  <h1>Sensor Data</h1>
+  <pre id="data">Loading...</pre>
+</body>
+</html>
