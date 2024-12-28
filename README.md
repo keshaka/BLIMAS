@@ -8,7 +8,7 @@
 
 🔥 Why BLIMAS — find out in our [presentation](https://www.canva.com/design/DAGXYRGw4qE/mx7e6SYuHaagCkh4dVNc0Q/edit?utm_content=DAGXYRGw4qE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton) 📑
 
-👉 [Blimas](http://blimas.pasgorasa.site)
+👉 Official website - [Blimas](http://blimas.pasgorasa.site)
 
 ## 🚀 About
 
