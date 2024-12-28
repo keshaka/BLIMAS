@@ -1,8 +1,8 @@
 <?php
 // Database connection parameters
-$servername = "sensor.cxkk2guqqpwa.ap-southeast-1.rds.amazonaws.com";
-$username = "keshaka";
-$password = "alohomora";
+$servername = "";
+$username = "";
+$password = "";
 $dbname = "sensor_data";
 
 // Create connection
