@@ -1,5 +1,5 @@
 <a name="top"></a>
-[![Abblix OIDC Server](https://blimas.pasgorasa.site/images/logo.png)](https://blimas.pasgorasa.site)
+[![BLIMAS](https://blimas.pasgorasa.site/images/logo.png)](https://blimas.pasgorasa.site)
 [![language](https://img.shields.io/badge/Language-html%2Fcss%2Fjs%2FArduino-blue)]
 [![CodeQL analysis](https://github.com/keshaka/BLIMAS/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/keshaka/BLIMAS/security/code-scanning?query=is%3Aopen)
 [![GitHub release](https://img.shields.io/github/v/release/keshaka/BLIMAS)](#)
