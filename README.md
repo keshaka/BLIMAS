@@ -34,8 +34,8 @@ We are collecting,
 
 ## 🖥️ Hosted on
 
-[![AWS](https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aws-icon.png)]
-[![Mongodb](https://1000logos.net/wp-content/uploads/2020/08/MongoDB-Logo.png)]
+![AWS](https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/aws-icon.png)
+![Mongodb](https://1000logos.net/wp-content/uploads/2020/08/MongoDB-Logo.png)
 
 
 
