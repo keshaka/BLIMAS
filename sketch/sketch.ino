@@ -6,7 +6,7 @@
 
 // WiFi Credentials
 const char* ssid = "Keshaka";
-const char* password = "Qwer-3552";
+const char* password = "Qwer3552";
 
 // Server details
 const char* server = "blimas.pasgorasa.site";
