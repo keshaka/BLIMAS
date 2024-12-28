@@ -15,4 +15,14 @@
 
 
 
+## 💡 Arduino setup
+
+**Pin Connect**
+- DS18B20 connected to pin D2
+- DHT11 connected to pin D3
+- Ultrasonic sensor TRIG pin connected to D4
+- Ultrasonic sensor ECHO pin connected to D5
+
+
+
 [Back to top](#top)
