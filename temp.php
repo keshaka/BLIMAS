@@ -13,17 +13,17 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch the distance data from the database
-$sql = "SELECT distance, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
+// Fetch the tempDHT data from the database
+$sql = "SELECT tempDHT, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
 $result = $conn->query($sql);
 
 // Arrays to store the data for the graph
-$distances = [];
+$tempDHT = [];
 $timestamps = [];
 
 // Fetch the data into the arrays
 while ($row = $result->fetch_assoc()) {
-    $distances[] = $row['distance'];
+    $tempDHT[] = $row['tempDHT'];
     $timestamps[] = $row['timestamp'];
 }
 
@@ -36,7 +36,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLIMAS</title>
+    <title>BLIMAS - tempDHT</title>
 
     <!-- Loading third party fonts -->
     <link href="http://fonts.googleapis.com/css?family=Roboto:300,400,700|" rel="stylesheet" type="text/css">
@@ -81,7 +81,6 @@ $conn->close();
             height: 100% !important; /* Make canvas fill container */
             display: block; /* Prevent default inline behavior */
         }
-
     </style>
 </head>
 <body>
@@ -102,10 +101,10 @@ $conn->close();
                 <button type="button" class="menu-toggle"><i class="fa fa-bars"></i></button>
                 <ul class="menu">
                     <li class="menu-item"><a href="index.html">Home</a></li>
-                    <li class="menu-item current-menu-item"><a href="water-level.php">Water Level</a></li>
-                    <li class="menu-item"><a href="temp.php">Temperature</a></li>
-					<li class="menu-item"><a href="humidity.php">Humidity</a></li>
-					<li class="menu-item"><a href="watertmp.php">Underwater Temparature</a></li>
+                    <li class="menu-item"><a href="water-level.php">Water Level</a></li>
+                    <li class="menu-item current-menu-item"><a href="temp.php">Temperature</a></li>
+                    <li class="menu-item"><a href="humidity.php">Humidity</a></li>
+                    <li class="menu-item"><a href="watertmp.php">Underwater Temperature</a></li>
                 </ul> <!-- .menu -->
             </div> <!-- .main-navigation -->
 
@@ -117,22 +116,22 @@ $conn->close();
         <div class="container">
             <div class="breadcrumb">
                 <a href="index.html">Home</a>
-                <span>Water Level</span>
+                <span>Temperature</span>
             </div>
         </div>
         <div class="container">
-            <h1>Water Level Over Time</h1>
+            <h1>Temperature Over Time</h1>
         </div>
     </main> <!-- .main-content -->
 
-    <!-- Container for the canvas, now we limit the height and prevent stretching -->
+    <!-- Container for the canvas -->
     <div class="chart-container">
-        <canvas id="distanceChart"></canvas>
+        <canvas id="tempDHTChart"></canvas>
     </div>
 
     <script>
         // Get PHP data and pass to JavaScript
-        var distances = <?php echo json_encode($distances); ?>;
+        var tempDHT = <?php echo json_encode($tempDHT); ?>;
         var timestamps = <?php echo json_encode($timestamps); ?>;
 
         // Format timestamps for readability
@@ -142,18 +141,18 @@ $conn->close();
         });
 
         // Get the canvas context
-        var ctx = document.getElementById('distanceChart').getContext('2d');
+        var ctx = document.getElementById('tempDHTChart').getContext('2d');
 
         // Create the chart
-        var distanceChart = new Chart(ctx, {
+        var tempDHTChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: formattedTimestamps,
+                labels: formattedTimestamps,  // Display timestamps from left to right
                 datasets: [{
-                    label: 'Distance',
-                    data: distances,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    label: 'tempDHT (°C)',
+                    data: tempDHT,
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
                     fill: true,
                     tension: 0.4
                 }]
@@ -175,6 +174,25 @@ $conn->close();
                 }
             }
         });
+
+        // Function to update chart with new data
+        function updateChart(newTimestamp, newTempDHT) {
+            // Add new data to the right side
+            tempDHTChart.data.labels.push(newTimestamp);
+            tempDHTChart.data.datasets[0].data.push(newTempDHT);
+
+            // Optionally remove old data to keep the number of data points manageable
+            if (tempDHTChart.data.labels.length > 50) {
+                tempDHTChart.data.labels.shift(); // Remove the first (oldest) label
+                tempDHTChart.data.datasets[0].data.shift(); // Remove the first (oldest) data point
+            }
+
+            // Update the chart
+            tempDHTChart.update();
+        }
+
+        // Example of new data being added (you could call this function periodically)
+        // updateChart("2024-12-28 12:30", 25.1);
     </script>
 
     <footer class="site-footer">
