@@ -4,15 +4,13 @@
 #include <DallasTemperature.h>
 #include <DHT.h>
 
-// Wi-Fi credentials
-const char* ssid = "Keshaka";
+
+const char* ssid = "Keshaka";        
 const char* password = "Qwer3552";
+const char* server = "http://blimas.pasgorasa.site/upload.php";
 
-// Server URL
-const char* serverUrl = "http://blimas.pasgorasa.site/upload.php";
-
-// WiFiClient object
 WiFiClient wifiClient;
+
 
 // Pin definitions
 #define ONE_WIRE_BUS D2       // DS18B20 connected to pin D2
@@ -28,19 +26,15 @@ DHT dht(DHT_PIN, DHT_TYPE);
 
 void setup() {
   Serial.begin(115200);
-  
-  // Start sensors
-  ds18b20.begin();
-  dht.begin();
-  
-  // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   Serial.print("Connecting to Wi-Fi");
+  
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");
   }
-  Serial.println("\nConnected to Wi-Fi.");
+  Serial.println("Hello. Welcome to BLIMAS system");
+  Serial.println("Connected to WiFi");
 }
 
 void loop() {
@@ -68,13 +62,18 @@ void loop() {
     duration = pulseIn(ECHO_PIN, HIGH);
     distance = duration * 0.034 / 2; // Convert to cm
 
+
     // Debugging output
     Serial.println("Sensor Readings:");
     Serial.printf("Temp1: %.2f °C, Temp2: %.2f °C, Temp3: %.2f °C\n", temp1, temp2, temp3);
     Serial.printf("Humidity: %.2f%%, TempDHT: %.2f °C\n", humidity, tempDHT);
-    Serial.printf("Distance: %.2f cm\n", distance);
+    Serial.printf("Water level: %.2f cm\n", distance);
 
-    // Prepare POST data
+
+    http.begin(wifiClient, server);
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    // Format sensor data as POST parameters
     String postData = "temp1=" + String(temp1) +
                       "&temp2=" + String(temp2) +
                       "&temp3=" + String(temp3) +
@@ -82,22 +81,17 @@ void loop() {
                       "&tempDHT=" + String(tempDHT) +
                       "&distance=" + String(distance);
 
-    // Send data to the server
-    http.begin(wifiClient, serverUrl);
-    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    int httpResponseCode = http.POST(postData);
 
-    int httpCode = http.POST(postData);
-    if (httpCode > 0) {
-      String payload = http.getString();
-      Serial.println("Server Response: " + payload);
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println("Server Response: " + response);
     } else {
-      Serial.println("Error sending POST: " + String(httpCode));
+      Serial.println("Error in sending data");
     }
 
     http.end();
-  } else {
-    Serial.println("Wi-Fi not connected!");
   }
 
-  delay(5000); // Send data every 5 seconds
+  delay(600000); // Send data every 10 minutes
 }
