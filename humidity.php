@@ -104,7 +104,7 @@ $conn->close();
                     <li class="menu-item"><a href="water-level.php">Water Level</a></li>
                     <li class="menu-item"><a href="temp.php">Temperature</a></li>
                     <li class="menu-item current-menu-item"><a href="humidity.php">Humidity</a></li>
-                    <li class="menu-item"><a href="temp.php">Temperature</a></li>
+                    <li class="menu-item"><a href="watertmp.php">Underwater Temperature</a></li>
                 </ul> <!-- .menu -->
             </div> <!-- .main-navigation -->
 
