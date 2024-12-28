@@ -20,27 +20,7 @@
 		<![endif]-->
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-		<script>
-			async function fetchData() {
-			  const response = await fetch('sensor_data.txt');
-			  const data = await response.text();
-		
-			  const lines = data.trim().split("\n");
-			  const latestData = lines[lines.length - 1];
-		
-			  const [temp1, temp2, temp3, humidity, tempDHT, distance] = latestData.match(/\d+(\.\d+)?/g);
-		
-			  document.getElementById('temp1').innerText = temp1 + ' °C';
-			  document.getElementById('temp2').innerText = temp2 + ' °C';
-			  document.getElementById('temp3').innerText = temp3 + ' °C';
-			  document.getElementById('humidity').innerText = humidity + ' %';
-			  document.getElementById('tempDHT').innerText = tempDHT + ' °C';
-			  document.getElementById('distance').innerText = distance + ' cm';
-			}
-		
-			setInterval(fetchData, 5000); // Refresh data every 5 seconds
-			window.onload = fetchData;
-		  </script>
+		<script src="/js/data.js"></script>
 
 
 	</head>
