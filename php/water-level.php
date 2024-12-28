@@ -35,15 +35,40 @@ $conn->close();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Distance Data Graph</title>
-    <!-- Include Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Some basic styles for the graph container */
+        /* Body setup */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            overflow: hidden; /* Prevent overall page scroll */
+        }
+
+        /* Container for the canvas */
+        .chart-container {
+            width: 100%;
+            max-width: 900px; /* Limit maximum width */
+            height: 400px;  /* Set a fixed height */
+            overflow: hidden; /* Prevent canvas from growing beyond container */
+        }
+
+        /* The canvas itself */
         canvas {
             width: 100%;
-            height: 400px;
+            height: 100%; /* Stretch the canvas to fill container */
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
         }
     </style>
 </head>
@@ -51,60 +76,49 @@ $conn->close();
 
 <h1>Distance Data (Latest 50 Entries)</h1>
 
-<!-- Canvas element for Chart.js to draw the graph -->
-<canvas id="distanceChart"></canvas>
+<!-- Container for the canvas, now we limit the height and prevent stretching -->
+<div class="chart-container">
+    <canvas id="distanceChart"></canvas>
+</div>
 
 <script>
-    // Get the PHP data and encode it into JavaScript arrays
+    // Get PHP data and pass to JavaScript
     var distances = <?php echo json_encode($distances); ?>;
     var timestamps = <?php echo json_encode($timestamps); ?>;
 
-    // Format timestamps (optional, if needed, to display in a more readable format)
+    // Format timestamps for readability
     var formattedTimestamps = timestamps.map(function(timestamp) {
         var date = new Date(timestamp);
         return date.toLocaleString();  // Converts timestamp to a readable date/time string
     });
 
-    // Create the chart
     var ctx = document.getElementById('distanceChart').getContext('2d');
     var distanceChart = new Chart(ctx, {
-        type: 'line',  // Line chart
+        type: 'line',
         data: {
-            labels: formattedTimestamps,  // X-axis labels (timestamps)
+            labels: formattedTimestamps,
             datasets: [{
                 label: 'Distance',
-                data: distances,  // Y-axis data (distance values)
+                data: distances,
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,  // Fill under the line
-                tension: 0.4  // Smooth the line
+                fill: true,
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,  // Maintain aspect ratio to avoid stretching
             scales: {
                 x: {
                     ticks: {
                         autoSkip: true,
-                        maxRotation: 90,  // Rotate labels if they overlap
+                        maxRotation: 90,
                         minRotation: 45
                     }
                 },
                 y: {
-                    beginAtZero: false  // Adjust based on your data, if necessary
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            return 'Distance: ' + tooltipItem.raw + ' units';
-                        }
-                    }
+                    beginAtZero: false
                 }
             }
         }
