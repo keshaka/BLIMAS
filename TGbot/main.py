@@ -7,8 +7,6 @@ from telegram.ext import (
 import requests
 import schedule
 import time
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 
 # Telegram Bot Token
 BOT_TOKEN = "5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY"
