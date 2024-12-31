@@ -7,34 +7,56 @@ from telegram.ext import (
 import requests
 import schedule
 import time
-
-import time
-from telegram.ext import Application, ContextTypes
-from telegram.error import TelegramError
-from telegram import Update, Bot
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-)
-import requests
-import time
-
-from telegram import Update, Bot
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-)
-import requests
-import schedule
-import time
+import subprocess
+import os
 
 # Telegram Bot Token
-BOT_TOKEN = "5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY"
-TOKEN = "5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY"
+BOT_TOKEN = "5748924136:AAE6j7Uomw787rurtbp5yIWfkVxYeEHnXZo"
 API_ENDPOINT = "http://blimas.pasgorasa.site/get_sensor_data.php"  # Replace with your sensor data endpoint
 CHAT_ID = "1066891806"
+
+
+# Function to dump the RDS database and send it via Telegram
+async def download_database(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    DB_HOST = "sensor.cxkk2guqqpwa.ap-southeast-1.rds.amazonaws.com"
+    DB_USER = "keshaka"
+    DB_PASSWORD = "alohomora"
+    DB_NAME = "sensor_data"
+    DB_PORT = 3306  # Change this to 5432 for PostgreSQL
+    dump_file = "database_dump.sql"
+
+    try:
+        # Create the database dump using mysqldump or pg_dump
+        dump_command = [
+            "mysqldump",  # Use "pg_dump" for PostgreSQL
+            f"--host={DB_HOST}",
+            f"--port={DB_PORT}",
+            f"--user={DB_USER}",
+            f"--password={DB_PASSWORD}",
+            DB_NAME
+        ]
+
+        with open(dump_file, "w") as f:
+            result = subprocess.run(dump_command, stdout=f, stderr=subprocess.PIPE, text=True)
+
+        if result.returncode == 0:
+            print(f"Database dump created successfully: {dump_file}")
+
+            # Send the dump file via Telegram
+            await context.bot.send_document(chat_id=CHAT_ID, document=open(dump_file, "rb"))
+            print("Database dump sent successfully via Telegram.")
+        else:
+            print(f"Error during database dump: {result.stderr}")
+            await update.message.reply_text("⚠️ Failed to create database dump! Check logs for details.")
+    except Exception as e:
+        print(f"Error while creating or sending the database dump: {e}")
+        await update.message.reply_text("⚠️ An error occurred while processing the database dump.")
+    finally:
+        # Clean up local dump file if it exists
+        if os.path.exists(dump_file):
+            os.remove(dump_file)
+            print("Temporary dump file removed.")
+
 
 # Function to fetch sensor data
 def fetch_sensor_data():
@@ -132,54 +154,6 @@ async def send_daily_summary():
     bot = Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id="YOUR_CHAT_ID", text=summary)
 
-async def send_hi(context: ContextTypes.DEFAULT_TYPE):
-    data = fetch_sensor_data()
-    if not data:
-        await context.bot.send_message(chat_id=CHAT_ID, text="⚠️ Error fetching sensor data!")
-        return
-
-    alerts = []
-    for sensor, value in data.items():
-        if (sensor != "timestamp"):
-            try:
-                value = float(value)  # Convert the value to a float
-                if value <= 0:
-                    try:
-                        await context.bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Problem detected with {sensor}: value is {value} (check the sensor).")
-                        print("Message sent successfully.")
-                    except TelegramError as e:
-                        print(f"Error sending message: {e}")
-            except ValueError:
-                try:
-                    await context.bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Problem detected with {sensor}: value is invalid (not a number). {sensor} සෙන්සරේ ගහපාන්.")
-                    print("Message sent successfully.")
-                except TelegramError as e:
-                    print(f"Error sending message: {e}")
-
-    try:
-        if "distance" in data and (float(data["distance"]) > 0):
-            if "distance" in data and (float(data["distance"]) < 30):
-                try:
-                    await context.bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Water level alert: {data['distance']} cm (outside safe range). ගංවතුර එනවෝ. දුවපල්ලා. 🏃‍♂️🌊")
-                    print("Message sent successfully.")
-                except TelegramError as e:
-                    print(f"Error sending message: {e}")
-            if "distance" in data and (float(data["distance"]) > 50):
-                try:
-                    await context.bot.send_message(chat_id=CHAT_ID, text=f"⚠️ Water level alert: {data['distance']} cm (outside safe range). නියගයක් එනවෝ. 🚱")
-                    print("Message sent successfully.")
-                except TelegramError as e:
-                    print(f"Error sending message: {e}")
-    except:
-        alerts.append(f"⚠️ Problem detected with ultrasonic sensor: value is invalid. jsn සෙන්සරේ ගහපාන්. ")
-
-    if "tempDHT" in data and (float(data['tempDHT']) > 32):
-            try:
-                await context.bot.send_message(chat_id=CHAT_ID, text=f"අම්මෝ..... අමාරුයී....... ෆෑන් එක දාපාන්............................. 🥵")
-                print("Message sent successfully.")
-            except TelegramError as e:
-                print(f"Error sending message: {e}")
-
 # Main function to start the bot
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
@@ -189,6 +163,7 @@ def main():
     app.add_handler(CommandHandler("check", check_sensor_data))
     app.add_handler(CommandHandler("alerts", check_alerts))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("download", download_database))
 
     # Start the bot
     print("Bot is running...")
@@ -198,19 +173,10 @@ def main():
     schedule.every().day.at("09:00").do(lambda: asyncio.run(send_daily_summary()))
     schedule.every(1).minutes.do(check_alerts)  # Alerts every 5 minutes
 
-    # Create the Application and get the job queue
-    application = Application.builder().token(TOKEN).build()
-
-    # Schedule the message to send every 10 seconds
-    application.job_queue.run_repeating(send_hi, interval=30, first=0)
-
-    # Start polling for updates
-    application.run_polling()
 
     while True:
         schedule.run_pending()
         time.sleep(10)
-
 
 if __name__ == "__main__":
     main()
