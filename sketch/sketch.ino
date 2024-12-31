@@ -7,7 +7,7 @@
 
 const char* ssid = "Keshaka";        
 const char* password = "Qwer3552";
-const char* server = "http://blimas.pasgorasa.site/upload.php";
+const char* server = "https://blimas.pasgorasa.site/upload.php";
 
 WiFiClient wifiClient;
 
