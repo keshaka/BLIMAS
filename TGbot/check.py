@@ -21,7 +21,7 @@ import schedule
 import time
 
 # Replace with your actual values
-TOKEN = '5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY'
+TOKEN = ''
 CHAT_ID = '1066891806'
 API_ENDPOINT = "http://blimas.pasgorasa.site/get_sensor_data.php"  # Replace with your sensor data endpoint
 

@@ -31,7 +31,7 @@ import schedule
 import time
 
 # Telegram Bot Token
-BOT_TOKEN = "5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY"
+BOT_TOKEN = ""
 TOKEN = "5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY"
 API_ENDPOINT = "http://blimas.pasgorasa.site/get_sensor_data.php"  # Replace with your sensor data endpoint
 CHAT_ID = "1066891806"
