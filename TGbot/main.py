@@ -64,25 +64,23 @@ async def check_alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if value <= 0:
                     alerts.append(f"⚠️ Problem detected with {sensor}: value is {value} (check the sensor).")
             except ValueError:
-                alerts.append(f"⚠️ Problem detected with {sensor}: value is invalid (not a number). {sensor} සෙන්සරේ ගහපාන්.")
+                alerts.append(f"⚠️ Problem detected with {sensor}: value is invalid (not a number).")
 
     try:
         if "distance" in data and (float(data["distance"]) > 0):
-            if "distance" in data and (float(data["distance"]) < 30):
-                alerts.append(f"⚠️ Water level alert: {data['distance']} cm (outside safe range). ගංවතුර එනවෝ. දුවපල්ලා. 🏃‍♂️🌊")
-            if "distance" in data and (float(data["distance"]) > 50):
-                alerts.append(f"⚠️ Water level alert: {data['distance']} cm (outside safe range). නියගයක් එනවෝ. 🚱")
+            if "distance" in data and (float(data["distance"]) < 450):
+                alerts.append(f"⚠️ Water level alert: {data['distance']} cm (outside safe range).")
+            if "distance" in data and (float(data["distance"]) > 470):
+                alerts.append(f"⚠️ Water level alert: {data['distance']} cm (outside safe range).")
     except:
-        alerts.append(f"⚠️ Problem detected with ultrasonic sensor: value is invalid. jsn සෙන්සරේ ගහපාන්. ")
+        alerts.append(f"⚠️ Problem detected with ultrasonic sensor: value is invalid.")
 
-    if "tempDHT" in data and (float(data['tempDHT']) > 32):
-            alerts.append(f"අම්මෝ..... අමාරුයී....... ෆෑන් එක දාපාන්............................. 🥵")
 
     if alerts:
         alert_message = "\n".join(alerts)
         await update.message.reply_text(alert_message)
     else:
-        await update.message.reply_text("✅ All sensors are operating normally. ඔක්කොම බඩු හොදට වැඩ.")
+        await update.message.reply_text("✅ All sensors are operating normally.")
         
 
 # Command: /help
