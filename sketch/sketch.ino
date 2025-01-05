@@ -35,8 +35,6 @@ void setup() {
     delay(1000);
     Serial.print(".");
   }
-  Serial.println("Hello. Welcome to BLIMAS system");
-  Serial.println("Connected to WiFi");
   
   // Initialize DS18B20
   ds18b20.begin();
@@ -47,7 +45,9 @@ void setup() {
   // Initialize JSN-SR04 pins
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-
+  
+  Serial.println("Hello. Welcome to BLIMAS system");
+  Serial.println("Connected to WiFi");
   Serial.println("Sensor Test Initialized!");
 }
 
@@ -60,10 +60,13 @@ void loop() {
   float temp1 = ds18b20.getTempCByIndex(0); // First DS18B20 sensor
   float temp2 = ds18b20.getTempCByIndex(1); // Second DS18B20 sensor
   float temp3 = ds18b20.getTempCByIndex(2); // Third DS18B20 sensor
+  Serial.print("DS18B20 Sensor 1 = ");
   Serial.print(temp1);
   Serial.println(" °C");
+  Serial.print("DS18B20 Sensor 2 = ");
   Serial.print(temp2);
   Serial.println(" °C");
+  Serial.print("DS18B20 Sensor 3 = ");
   Serial.print(temp3);
   Serial.println(" °C");
 
@@ -91,7 +94,7 @@ void loop() {
   digitalWrite(TRIG_PIN, LOW);
 
   long duration = pulseIn(ECHO_PIN, HIGH);
-  float distance = duration * 0.034 / 2; // Convert to cm
+  float distance = 500 - (duration * 0.034 / 2); // Convert to cm
 
   Serial.print("JSN-SR04 Distance: ");
   Serial.print(distance);
