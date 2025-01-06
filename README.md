@@ -38,8 +38,8 @@ We are collecting,
 <img src="https://1000logos.net/wp-content/uploads/2020/08/MongoDB-Logo.png" alt="Monogodb" width="200"/>
 
 ## Contributors
-- <a href="[https://allcontributors.org/docs/en/overview](https://github.com/Kevin200307)">Kevin</a>
-- <a href="[https://allcontributors.org/docs/en/overview](https://github.com/LP-Ishadi)">LP-Ishadi</a>
+- <a href="https://github.com/Kevin200307">Kevin</a>
+- <a href="https://github.com/LP-Ishadi">LP-Ishadi</a>
 
 
 [Back to top](#top)
