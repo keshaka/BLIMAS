@@ -157,8 +157,8 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
 
   if (httpResponseCode > 0) {
     Serial.printf("Login response code: %d\n", httpResponseCode);
-    mdisplay.drawString(0, 20, "Portal login successfull.");
-    mdisplay.display();
+    //mdisplay.drawString(0, 20, "Portal login successfull.");
+    //mdisplay.display();
   } else {
     Serial.printf("Login failed: %s\n", https.errorToString(httpResponseCode).c_str());
     mdisplay.clear();
@@ -195,6 +195,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
         mdisplay.drawString(0, 20, "Captive portal detected");
         mdisplay.drawString(0, 30, "Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
+        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance);
       }
     }
     mdisplay.display();
