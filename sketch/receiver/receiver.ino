@@ -12,7 +12,7 @@
 
 // Access Point config
 const char* ap_ssid = "blimas";
-const char* ap_password = "Qwer3552";
+const char* ap_password = "";
 
 // University WiFi config
 char uni_ssid[32] = "UoM_Wireless";
@@ -20,8 +20,8 @@ char uni_password[64] = "";
 
 // Captive portal login
 char login_url[128] = "https://wlan.uom.lk/login.html";
-char username[64] = "udithyamgki.23";
-char user_password[64] = "Alohomora$3552";
+char username[64] = "";
+char user_password[64] = "";
 
 // Remote server
 char serverURL[128] = "https://webpojja.pasgorasa.site/upload.php";
