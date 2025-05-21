@@ -12,7 +12,7 @@
 
 // Access Point config
 const char* ap_ssid = "blimas";
-const char* ap_password = "12345678";
+const char* ap_password = "Qwer3552";
 
 // University WiFi config
 char uni_ssid[32] = "UoM_Wireless";
