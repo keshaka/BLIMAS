@@ -10,11 +10,13 @@
 #include "HT_SSD1306Wire.h"
 
 // Pin Definitions
-#define ONE_WIRE_BUS 40  // DS18B20 data pin
-#define DHTPIN 19       // DHT22 data pin
+#define ONE_WIRE_BUS 19  // DS18B20 data pin
+#define DHTPIN 40       // DHT22 data pin
 #define DHTTYPE DHT22   // DHT sensor type
 #define TRIG_PIN 46     // JSN-SR04T trigger pin
 #define ECHO_PIN 45     // JSN-SR04T echo pin
+#define VBAT_Read    1
+#define	ADC_Ctrl    37
 
 // LoRa Configurations
 #define RF_FREQUENCY 433300000
@@ -38,8 +40,57 @@ void readSensors();
 void sendLoRaData();
 void displayData();
 
+int voltageToPercent(float voltage) {
+  if (voltage >= 4.2) return 100;
+  else if (voltage >= 4.0) return 85 + (voltage - 4.0) * 75;
+  else if (voltage >= 3.85) return 60 + (voltage - 3.85) * 166;
+  else if (voltage >= 3.7) return 40 + (voltage - 3.7) * 133;
+  else if (voltage >= 3.5) return 15 + (voltage - 3.5) * 125;
+  else if (voltage >= 3.3) return 5 + (voltage - 3.3) * 50;
+  else return 0;
+}
+
+
+void VextON(void)
+{
+  pinMode(Vext,OUTPUT);
+  digitalWrite(Vext, LOW);
+}
+
+void VextOFF(void) //Vext default OFF
+{
+  pinMode(Vext,OUTPUT);
+  digitalWrite(Vext, HIGH);
+}
+
+int readBatteryVoltage() {
+  // ADC resolution
+  const int resolution = 12;
+  const int adcMax = pow(2,resolution) - 1;
+  const float adcMaxVoltage = 3.3;
+  // On-board voltage divider
+  const int R1 = 390;
+  const int R2 = 100;
+  // Calibration measurements
+  const float measuredVoltage = 4.2;
+  const float reportedVoltage = 4.095;
+  // Calibration factor
+  const float factor = (adcMaxVoltage / adcMax) * ((R1 + R2)/(float)R2) * (measuredVoltage / reportedVoltage); 
+  digitalWrite(ADC_Ctrl,LOW);
+  delay(100);
+  int analogValue = analogRead(VBAT_Read);
+  digitalWrite(ADC_Ctrl,HIGH);
+
+  float floatVoltage = factor * analogValue;
+  uint16_t voltage = (int)(floatVoltage * 1000.0);
+  int batteryPercent = voltageToPercent(floatVoltage);
+  return batteryPercent;
+  //    delay(10000);
+}
+
 void setup() {
     Serial.begin(115200);
+    VextON();
     ds18b20.begin();
     dht.begin();
     pinMode(TRIG_PIN, OUTPUT);
@@ -58,18 +109,23 @@ void setup() {
     Radio.Init(&RadioEvents);
     Radio.SetChannel(RF_FREQUENCY);
     Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, 0, 7, 1, 8, false, true, 0, 0, false, 3000);
+
+    pinMode(ADC_Ctrl,OUTPUT);
+    pinMode(VBAT_Read,INPUT);
+    //adcAttachPin(VBAT_Read);
+    analogReadResolution(12);
 }
 
 void loop() {
     readSensors();
-    //displayData();
+    displayData();
     sendLoRaData();
     delay(5000);
 
     // Configure deep sleep
     Serial.println("Going to deep sleep...");
     esp_sleep_enable_timer_wakeup(sleepTime * 60 * 60 * 1000000);
-    esp_deep_sleep_start();
+    //esp_deep_sleep_start();
 }
 
 void readSensors() {
@@ -88,6 +144,7 @@ void readSensors() {
     digitalWrite(TRIG_PIN, LOW);
     long duration = pulseIn(ECHO_PIN, HIGH);
     float waterLevel = duration * 0.034 / 2;
+    int btrl = readBatteryVoltage();
 
     if (temp1==-127.00) {
           temp1 = 0;
@@ -117,8 +174,8 @@ void readSensors() {
         waterLevel = 0;
     }
 
-    snprintf(txpacket, sizeof(txpacket), "LM|3552|T1:%.2f,T2:%.2f,T3:%.2f,AirT:%.2f,H:%.2f,W:%.2f",
-             temp1, temp2, temp3, airTemp, humidity, waterLevel);
+    snprintf(txpacket, sizeof(txpacket), "LM|3552|T1:%.2f,T2:%.2f,T3:%.2f,AirT:%.2f,H:%.2f,W:%.2f.b:%d",
+             temp1, temp2, temp3, airTemp, humidity, waterLevel, btrl);
 }
 
 void displayData() {
@@ -128,7 +185,7 @@ void displayData() {
     String line1 = receivedData.substring(0, 22);  // First 18 characters
     String line2 = receivedData.substring(22, 48); // Next 18 characters
     String line3 = receivedData.substring(48, 71); // Next 18 characters
-    //String line4 = receivedData.substring(54, 72);
+    //String line4 = receivedData.substring(71, 80);
     //String line5 = receivedData.substring(72, 80);
     //mdisplay.drawString(0, 10, String(txpacket));
     mdisplay.drawString(0, 10, line1);
