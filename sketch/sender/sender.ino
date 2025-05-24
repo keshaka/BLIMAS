@@ -11,7 +11,7 @@
 
 // Pin Definitions
 #define ONE_WIRE_BUS 19  // DS18B20 data pin
-#define DHTPIN 40       // DHT22 data pin
+#define DHTPIN 4       // DHT22 data pin
 #define DHTTYPE DHT22   // DHT sensor type
 #define TRIG_PIN 46     // JSN-SR04T trigger pin
 #define ECHO_PIN 45     // JSN-SR04T echo pin
