@@ -1,44 +1,58 @@
 <?php
-$servername = ""; // Replace with your RDS endpoint
-$username = "";                // RDS username
-$password = "";                // RDS password
-$dbname = "sensor_data";                 // Your database name
+// Database credentials
+$host = '';
+$db = '';
+$user = '';
+$pass = '';
+$charset = 'utf8mb4';
 
-// Connect to RDS database
-$conn = new mysqli($servername, $username, $password, $dbname);
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+try {
+    // Connect to DB
+    $pdo = new PDO($dsn, $user, $pass, $options);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $temp1 = $_POST['temp1'] ?? 'NaN';
-    $temp2 = $_POST['temp2'] ?? 'NaN';
-    $temp3 = $_POST['temp3'] ?? 'NaN';
-    $humidity = $_POST['humidity'] ?? 'NaN';
-    $tempDHT = $_POST['tempDHT'] ?? 'NaN';
-    $distance = $_POST['distance'] ?? 'NaN';
+    // Check if required data is present
+    if (
+        isset($_POST['water_temp1']) &&
+        isset($_POST['water_temp2']) &&
+        isset($_POST['water_temp3']) &&
+        isset($_POST['humidity']) &&
+        isset($_POST['air_temp']) &&
+        isset($_POST['water_level']) &&
+        isset($_POST['battery_level'])
+    ) {
+        // Prepare SQL insert
+        $stmt = $pdo->prepare("INSERT INTO sensor_data (water_temp1, water_temp2, water_temp3, humidity, air_temp, water_level, battery_level)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-    // Write data to RDS
-    $stmt = $conn->prepare("INSERT INTO sensor_data (temp1, temp2, temp3, humidity, tempDHT, distance) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("dddddd", $temp1, $temp2, $temp3, $humidity, $tempDHT, $distance);
-    
-    if ($stmt->execute()) {
-        echo "Data received and stored!";
+        $stmt->execute([
+            $_POST['water_temp1'],
+            $_POST['water_temp2'],
+            $_POST['water_temp3'],
+            $_POST['humidity'],
+            $_POST['air_temp'],
+            $_POST['water_level'],
+            $_POST['battery_level']
+        ]);
+
+        echo "Data inserted successfully.";
+
+        // Create log line
+        $timestamp = date("Y-m-d H:i:s");
+        $log_line = "$timestamp, T1:{$_POST['water_temp1']}, T2:{$_POST['water_temp2']}, T3:{$_POST['water_temp3']}, AirT:{$_POST['air_temp']}, H:{$_POST['humidity']}, W:{$_POST['water_level']}, B:{$_POST['battery_level']}\n";
+
+        // Append to file
+        file_put_contents('sensor_log.txt', $log_line, FILE_APPEND | LOCK_EX);
     } else {
-        echo "Failed to store data: " . $stmt->error;
+        echo "Missing POST data.";
     }
-
-    $stmt->close();
-
-    // Write data to a file as a backup
-    $file = '/var/www/html/sensor_data.txt'; // Adjust path if needed
-    $data = "Temp1: $temp1, Temp2: $temp2, Temp3: $temp3, Humidity: $humidity, TempDHT: $tempDHT, Distance: $distance\n";
-    file_put_contents($file, $data, FILE_APPEND | LOCK_EX);
-} else {
-    echo "Invalid request method.";
+} catch (PDOException $e) {
+    echo "Database error: " . $e->getMessage();
 }
-
-$conn->close();
 ?>
