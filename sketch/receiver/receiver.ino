@@ -42,6 +42,7 @@ char rxpacket[128];
 bool lora_idle = true;
 int16_t rssi;
 float temp1, temp2, temp3, humidity, tempDHT, distance;
+int bat;
 static RadioEvents_t RadioEvents;
 bool apMode = true;
 
@@ -241,14 +242,14 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   memcpy(rxpacket, payload, size);
   rxpacket[size] = 0;
   Radio.Sleep();
-  sscanf(rxpacket, "LM|3552|T1:%f,T2:%f,T3:%f,AirT:%f,H:%f,W:%f",
-         &temp1, &temp2, &temp3, &tempDHT, &humidity, &distance);
+  sscanf(rxpacket, "LM|3552|T1:%f,T2:%f,T3:%f,AirT:%f,H:%f,W:%f,b:%d",
+         &temp1, &temp2, &temp3, &tempDHT, &humidity, &distance, &bat);
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Lake Monitor - RX");
   mdisplay.drawString(0, 10, "Temp = " + String(tempDHT) + "Humidity = " + String(humidity));
   mdisplay.drawString(0, 20, "Water level = " + String(distance));
   mdisplay.drawString(0, 30, "Water temp = " + String(temp1) + ", " + String(temp2) + ", " + String(temp3));
-  mdisplay.drawString(0, 40, "RSSI: " + String(rssi) + " dBm");
+  mdisplay.drawString(0, 40, "battery: " + String(bat) + "%, RSSI: " + String(rssi) + " dBm");
   mdisplay.display();
   stopHotspot();
   connectToUniversityWiFi();
