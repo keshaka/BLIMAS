@@ -22,7 +22,7 @@
 #define RF_FREQUENCY 433300000
 #define TX_OUTPUT_POWER 14
 
-#define sleepTime 1
+#define sleepTime 5
 
 // Initialize Sensors   
 OneWire oneWire(ONE_WIRE_BUS);
@@ -124,8 +124,8 @@ void loop() {
 
     // Configure deep sleep
     Serial.println("Going to deep sleep...");
-    esp_sleep_enable_timer_wakeup(sleepTime * 60 * 60 * 1000000);
-    //esp_deep_sleep_start();
+    esp_sleep_enable_timer_wakeup(sleepTime * 1 * 60 * 1000000);
+    esp_deep_sleep_start();
 }
 
 void readSensors() {
@@ -174,7 +174,7 @@ void readSensors() {
         waterLevel = 0;
     }
 
-    snprintf(txpacket, sizeof(txpacket), "LM|3552|T1:%.2f,T2:%.2f,T3:%.2f,AirT:%.2f,H:%.2f,W:%.2f.b:%d",
+    snprintf(txpacket, sizeof(txpacket), "LM|3552|T1:%.2f,T2:%.2f,T3:%.2f,AirT:%.2f,H:%.2f,W:%.2f,B:%d",
              temp1, temp2, temp3, airTemp, humidity, waterLevel, btrl);
 }
 
