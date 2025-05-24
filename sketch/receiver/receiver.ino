@@ -176,14 +176,14 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
   https.end();
 }
 
-void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance) {
+void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverURL);
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     String postData = "water_temp1=" + String(temp1) + "&water_temp2=" + String(temp2) +
                       "&water_temp3=" + String(temp3) + "&humidity=" + String(humidity) +
-                      "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance);
+                      "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance) + "&battery_level" + String(bat);
     int httpResponseCode = http.POST(postData);
     Serial.println("HTTP Response: " + String(httpResponseCode));
     if (httpResponseCode == 200) {
@@ -196,7 +196,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
         mdisplay.drawString(0, 20, "Captive portal detected");
         mdisplay.drawString(0, 30, "Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
-        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance);
+        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat);
       }
     }
     mdisplay.display();
@@ -253,7 +253,7 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   mdisplay.display();
   stopHotspot();
   connectToUniversityWiFi();
-  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance);
+  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat);
   disconnectWiFi();
   setupHotspot();
   lora_idle = true;
