@@ -183,7 +183,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     String postData = "water_temp1=" + String(temp1) + "&water_temp2=" + String(temp2) +
                       "&water_temp3=" + String(temp3) + "&humidity=" + String(humidity) +
-                      "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance) + "&battery_level" + String(bat);
+                      "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance) + "&battery_level=" + String(bat);
     int httpResponseCode = http.POST(postData);
     Serial.println("HTTP Response: " + String(httpResponseCode));
     if (httpResponseCode == 200) {
@@ -242,8 +242,10 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   memcpy(rxpacket, payload, size);
   rxpacket[size] = 0;
   Radio.Sleep();
-  sscanf(rxpacket, "LM|3552|T1:%f,T2:%f,T3:%f,AirT:%f,H:%f,W:%f,b:%d",
+  Serial.printf("%s\n", rxpacket);
+  sscanf(rxpacket, "LM|3552|T1:%f,T2:%f,T3:%f,AirT:%f,H:%f,W:%f,B:%d",
          &temp1, &temp2, &temp3, &tempDHT, &humidity, &distance, &bat);
+  Serial.printf("%d\n", bat);
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Lake Monitor - RX");
   mdisplay.drawString(0, 10, "Temp = " + String(tempDHT) + "Humidity = " + String(humidity));
