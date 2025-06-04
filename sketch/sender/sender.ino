@@ -21,6 +21,7 @@
 // LoRa Configurations
 #define RF_FREQUENCY 433300000
 #define TX_OUTPUT_POWER 14
+int LORA_SPREADING_FACTOR = 12;
 
 #define sleepTime 5
 
@@ -108,7 +109,7 @@ void setup() {
     RadioEvents.TxDone = [](){ Serial.println("LoRa TX Done"); };
     Radio.Init(&RadioEvents);
     Radio.SetChannel(RF_FREQUENCY);
-    Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, 0, 7, 1, 8, false, true, 0, 0, false, 3000);
+    Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, 0, LORA_SPREADING_FACTOR, 1, 8, false, true, 0, 0, false, 3000);
 
     pinMode(ADC_Ctrl,OUTPUT);
     pinMode(VBAT_Read,INPUT);
