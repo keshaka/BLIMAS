@@ -1,9 +1,9 @@
 <?php
 // Database credentials
-$host = '';
-$db = '';
-$user = '';
-$pass = '';
+$host = 'database-1.c3e8ygu8uk3t.eu-north-1.rds.amazonaws.com';
+$db = 'blimas';
+$user = 'admin';
+$pass = 'kakkabetta123';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
