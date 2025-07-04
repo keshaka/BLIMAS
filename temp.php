@@ -1,34 +1,29 @@
 <?php
-// Database connection parameters
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "sensor_data";
+require_once 'includes/database.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Get air temperature data from the database
+try {
+    $conn = DatabaseConfig::getMySQLiConnection();
+    $sql = "SELECT air_temperature, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50";
+    $result = $conn->query($sql);
+    
+    // Arrays to store the data for the graph
+    $tempData = [];
+    $timestamps = [];
+    
+    // Fetch the data into the arrays
+    while ($row = $result->fetch_assoc()) {
+        $tempData[] = $row['air_temperature'];
+        $timestamps[] = $row['timestamp'];
+    }
+    
+    $conn->close();
+} catch (Exception $e) {
+    // Handle error gracefully
+    $tempData = [];
+    $timestamps = [];
+    error_log("Temperature page database error: " . $e->getMessage());
 }
-
-// Fetch the tempDHT data from the database
-$sql = "SELECT tempDHT, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
-$result = $conn->query($sql);
-
-// Arrays to store the data for the graph
-$tempDHT = [];
-$timestamps = [];
-
-// Fetch the data into the arrays
-while ($row = $result->fetch_assoc()) {
-    $tempDHT[] = $row['tempDHT'];
-    $timestamps[] = $row['timestamp'];
-}
-
-// Close connection
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -44,6 +39,7 @@ $conn->close();
 
     <!-- Loading main css file -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/enhanced.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -126,12 +122,12 @@ $conn->close();
 
     <!-- Container for the canvas -->
     <div class="chart-container">
-        <canvas id="tempDHTChart"></canvas>
+        <canvas id="temperatureChart"></canvas>
     </div>
 
     <script>
         // Get PHP data and pass to JavaScript
-        var tempDHT = <?php echo json_encode($tempDHT); ?>;
+        var tempData = <?php echo json_encode($tempData); ?>;
         var timestamps = <?php echo json_encode($timestamps); ?>;
 
         // Format timestamps for readability
@@ -141,16 +137,16 @@ $conn->close();
         });
 
         // Get the canvas context
-        var ctx = document.getElementById('tempDHTChart').getContext('2d');
+        var ctx = document.getElementById('temperatureChart').getContext('2d');
 
         // Create the chart
-        var tempDHTChart = new Chart(ctx, {
+        var temperatureChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: formattedTimestamps,  // Display timestamps from left to right
                 datasets: [{
-                    label: 'tempDHT (°C)',
-                    data: tempDHT,
+                    label: 'Air Temperature (°C)',
+                    data: tempData,
                     borderColor: 'rgba(255, 159, 64, 1)',
                     backgroundColor: 'rgba(255, 159, 64, 0.2)',
                     fill: true,

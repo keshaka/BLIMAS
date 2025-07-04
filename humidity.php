@@ -1,34 +1,29 @@
 <?php
-// Database connection parameters
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "sensor_data";
+require_once 'includes/database.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Get humidity data from the database
+try {
+    $conn = DatabaseConfig::getMySQLiConnection();
+    $sql = "SELECT humidity, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50";
+    $result = $conn->query($sql);
+    
+    // Arrays to store the data for the graph
+    $humidityData = [];
+    $timestamps = [];
+    
+    // Fetch the data into the arrays
+    while ($row = $result->fetch_assoc()) {
+        $humidityData[] = $row['humidity'];
+        $timestamps[] = $row['timestamp'];
+    }
+    
+    $conn->close();
+} catch (Exception $e) {
+    // Handle error gracefully
+    $humidityData = [];
+    $timestamps = [];
+    error_log("Humidity page database error: " . $e->getMessage());
 }
-
-// Fetch the humidity data from the database
-$sql = "SELECT humidity, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
-$result = $conn->query($sql);
-
-// Arrays to store the data for the graph
-$humidity = [];
-$timestamps = [];
-
-// Fetch the data into the arrays
-while ($row = $result->fetch_assoc()) {
-    $humidity[] = $row['humidity'];
-    $timestamps[] = $row['timestamp'];
-}
-
-// Close connection
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -44,6 +39,7 @@ $conn->close();
 
     <!-- Loading main css file -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/enhanced.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -131,7 +127,7 @@ $conn->close();
 
     <script>
         // Get PHP data and pass to JavaScript
-        var humidity = <?php echo json_encode($humidity); ?>;
+        var humidityData = <?php echo json_encode($humidityData); ?>;
         var timestamps = <?php echo json_encode($timestamps); ?>;
 
         // Format timestamps for readability
@@ -150,7 +146,7 @@ $conn->close();
                 labels: formattedTimestamps,  // Display timestamps from left to right
                 datasets: [{
                     label: 'Humidity (%)',
-                    data: humidity,
+                    data: humidityData,
                     borderColor: 'rgba(153, 102, 255, 1)',
                     backgroundColor: 'rgba(153, 102, 255, 0.2)',
                     fill: true,
