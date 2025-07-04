@@ -1,0 +1,133 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET');
+header('Access-Control-Allow-Headers: Content-Type');
+
+require_once __DIR__ . '/../config/admin-auth.php';
+require_once __DIR__ . '/../config/database.php';
+
+// Check admin authentication
+$auth = new AdminAuth();
+if (!$auth->isLoggedIn()) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Unauthorized access - admin login required'
+    ]);
+    exit;
+}
+
+try {
+    $database = new Database();
+    $conn = $database->getConnection();
+    
+    // Get the limit parameter (default to 1 for latest data)
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 1;
+    $limit = max(1, min(100, $limit)); // Ensure limit is between 1 and 100
+    
+    // Fetch the latest sensor data including battery level (admin only)
+    $sql = "SELECT 
+                id,
+                timestamp,
+                COALESCE(air_temperature, air_temp) as air_temperature,
+                humidity,
+                water_level,
+                COALESCE(water_temp_depth1, water_temp1) as water_temp_depth1,
+                COALESCE(water_temp_depth2, water_temp2) as water_temp_depth2,
+                COALESCE(water_temp_depth3, water_temp3) as water_temp_depth3,
+                battery_level
+            FROM sensor_data 
+            ORDER BY timestamp DESC 
+            LIMIT ?";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([$limit]);
+    $data = $stmt->fetchAll();
+    
+    if ($data) {
+        // Format the data
+        $formatted_data = [];
+        foreach ($data as $row) {
+            $battery_level = $row['battery_level'] ? (float)$row['battery_level'] : null;
+            $battery_status = 'unknown';
+            
+            if ($battery_level !== null) {
+                if ($battery_level >= BATTERY_GOOD) {
+                    $battery_status = 'good';
+                } elseif ($battery_level >= BATTERY_WARN) {
+                    $battery_status = 'warning';
+                } else {
+                    $battery_status = 'critical';
+                }
+            }
+            
+            $formatted_data[] = [
+                'id' => (int)$row['id'],
+                'timestamp' => $row['timestamp'],
+                'air_temperature' => $row['air_temperature'] ? (float)$row['air_temperature'] : null,
+                'humidity' => $row['humidity'] ? (float)$row['humidity'] : null,
+                'water_level' => $row['water_level'] ? (float)$row['water_level'] : null,
+                'water_temperatures' => [
+                    'depth1' => $row['water_temp_depth1'] ? (float)$row['water_temp_depth1'] : null,
+                    'depth2' => $row['water_temp_depth2'] ? (float)$row['water_temp_depth2'] : null,
+                    'depth3' => $row['water_temp_depth3'] ? (float)$row['water_temp_depth3'] : null
+                ],
+                'battery' => [
+                    'level' => $battery_level,
+                    'status' => $battery_status,
+                    'percentage' => $battery_level ? round($battery_level, 1) . '%' : 'N/A'
+                ]
+            ];
+        }
+        
+        // Get system statistics
+        $stats_sql = "SELECT 
+                        COUNT(*) as total_records,
+                        MAX(timestamp) as last_update,
+                        MIN(timestamp) as first_record,
+                        AVG(battery_level) as avg_battery
+                      FROM sensor_data 
+                      WHERE timestamp > DATE_SUB(NOW(), INTERVAL 24 HOUR)";
+        
+        $stmt = $conn->prepare($stats_sql);
+        $stmt->execute();
+        $stats = $stmt->fetch();
+        
+        $response = [
+            'success' => true,
+            'data' => $limit === 1 ? $formatted_data[0] : $formatted_data,
+            'count' => count($formatted_data),
+            'statistics' => [
+                'records_last_24h' => (int)$stats['total_records'],
+                'last_update' => $stats['last_update'],
+                'first_record' => $stats['first_record'],
+                'avg_battery_24h' => $stats['avg_battery'] ? round((float)$stats['avg_battery'], 1) : null
+            ],
+            'timestamp' => date('Y-m-d H:i:s'),
+            'admin_access' => true
+        ];
+    } else {
+        $response = [
+            'success' => false,
+            'error' => 'No sensor data found',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'admin_access' => true
+        ];
+    }
+    
+    echo json_encode($response, JSON_PRETTY_PRINT);
+    
+} catch (Exception $e) {
+    error_log("Admin data API error: " . $e->getMessage());
+    
+    $response = [
+        'success' => false,
+        'error' => 'Internal server error',
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+    
+    http_response_code(500);
+    echo json_encode($response, JSON_PRETTY_PRINT);
+}
+?>
