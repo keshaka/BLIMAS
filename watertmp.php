@@ -1,38 +1,35 @@
 <?php
-// Database connection parameters
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "sensor_data";
+require_once 'includes/database.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Get water temperature data from the database
+try {
+    $conn = DatabaseConfig::getMySQLiConnection();
+    $sql = "SELECT water_temp1, water_temp2, water_temp3, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50";
+    $result = $conn->query($sql);
+    
+    // Arrays to store the data for the graph
+    $temp1 = [];
+    $temp2 = [];
+    $temp3 = [];
+    $timestamps = [];
+    
+    // Fetch the data into the arrays
+    while ($row = $result->fetch_assoc()) {
+        $temp1[] = $row['water_temp1'];
+        $temp2[] = $row['water_temp2'];
+        $temp3[] = $row['water_temp3'];
+        $timestamps[] = $row['timestamp'];
+    }
+    
+    $conn->close();
+} catch (Exception $e) {
+    // Handle error gracefully
+    $temp1 = [];
+    $temp2 = [];
+    $temp3 = [];
+    $timestamps = [];
+    error_log("Water temperature page database error: " . $e->getMessage());
 }
-
-// Fetch the temperature data from the database
-$sql = "SELECT temp1, temp2, temp3, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
-$result = $conn->query($sql);
-
-// Arrays to store the data for the graph
-$temp1 = [];
-$temp2 = [];
-$temp3 = [];
-$timestamps = [];
-
-// Fetch the data into the arrays
-while ($row = $result->fetch_assoc()) {
-    $temp1[] = $row['temp1'];
-    $temp2[] = $row['temp2'];
-    $temp3[] = $row['temp3'];
-    $timestamps[] = $row['timestamp'];
-}
-
-// Close connection
-$conn->close();
 ?>
 
 <!DOCTYPE html>

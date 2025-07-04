@@ -1,34 +1,29 @@
 <?php
-// Database connection parameters
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "sensor_data";
+require_once 'includes/database.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Get water level data from the database
+try {
+    $conn = DatabaseConfig::getMySQLiConnection();
+    $sql = "SELECT water_level, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50";
+    $result = $conn->query($sql);
+    
+    // Arrays to store the data for the graph
+    $waterLevels = [];
+    $timestamps = [];
+    
+    // Fetch the data into the arrays
+    while ($row = $result->fetch_assoc()) {
+        $waterLevels[] = $row['water_level'];
+        $timestamps[] = $row['timestamp'];
+    }
+    
+    $conn->close();
+} catch (Exception $e) {
+    // Handle error gracefully
+    $waterLevels = [];
+    $timestamps = [];
+    error_log("Water level page database error: " . $e->getMessage());
 }
-
-// Fetch the distance data from the database
-$sql = "SELECT distance, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
-$result = $conn->query($sql);
-
-// Arrays to store the data for the graph
-$distances = [];
-$timestamps = [];
-
-// Fetch the data into the arrays
-while ($row = $result->fetch_assoc()) {
-    $distances[] = $row['distance'];
-    $timestamps[] = $row['timestamp'];
-}
-
-// Close connection
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -127,12 +122,12 @@ $conn->close();
 
     <!-- Container for the canvas, now we limit the height and prevent stretching -->
     <div class="chart-container">
-        <canvas id="distanceChart"></canvas>
+        <canvas id="waterLevelChart"></canvas>
     </div>
 
     <script>
         // Get PHP data and pass to JavaScript
-        var distances = <?php echo json_encode($distances); ?>;
+        var waterLevels = <?php echo json_encode($waterLevels); ?>;
         var timestamps = <?php echo json_encode($timestamps); ?>;
 
         // Format timestamps for readability
@@ -142,16 +137,16 @@ $conn->close();
         });
 
         // Get the canvas context
-        var ctx = document.getElementById('distanceChart').getContext('2d');
+        var ctx = document.getElementById('waterLevelChart').getContext('2d');
 
         // Create the chart
-        var distanceChart = new Chart(ctx, {
+        var waterLevelChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: formattedTimestamps,
                 datasets: [{
-                    label: 'Distance',
-                    data: distances,
+                    label: 'Water Level (cm)',
+                    data: waterLevels,
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     fill: true,
