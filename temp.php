@@ -39,6 +39,7 @@ try {
 
     <!-- Loading main css file -->
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/enhanced.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
