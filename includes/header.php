@@ -16,8 +16,8 @@ require_once __DIR__ . '/../config/config.php';
     <link href="<?php echo isset($base_url) ? $base_url : ''; ?>/fonts/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- Loading main css file -->
-    <link rel="stylesheet" href="<?php echo isset($base_url) ? $base_url : ''; ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?php echo isset($base_url) ? $base_url : ''; ?>/style.css">
+    <link rel="stylesheet" href="<?php echo isset($base_url) ? $base_url : ''; ?>/assets/css/style.css">
     
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

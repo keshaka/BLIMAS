@@ -40,6 +40,7 @@
     <script src="<?php echo isset($base_url) ? $base_url : ''; ?>/js/plugins.js"></script>
     <script src="<?php echo isset($base_url) ? $base_url : ''; ?>/js/app.js"></script>
     <script src="<?php echo isset($base_url) ? $base_url : ''; ?>/assets/js/main.js"></script>
+    <script src="<?php echo isset($base_url) ? $base_url : ''; ?>/assets/js/charts.js"></script>
     
     <?php if (isset($additional_js)): ?>
         <?php foreach ($additional_js as $js): ?>
