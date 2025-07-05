@@ -59,6 +59,26 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
         .mobile-menu {
             display: none;
             color: white;
@@ -211,6 +231,12 @@
 
             .navbar {
                 padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .back-button {
+                order: -1;
             }
 
             h1 {
@@ -222,6 +248,18 @@
             }
         }
     </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <a href="index.php" class="logo">BLIMAS</a>
+            <a href="index.php" class="back-button">
+                ← Back to Dashboard
+            </a>
+            <div class="mobile-menu">☰</div>
+        </nav>
+    </header>
+    <div class="main-content">
 </head>
 <body>
     <div class="container">
