@@ -1,209 +1,121 @@
-<?php
-// Database connection parameters
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "sensor_data";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Fetch the distance data from the database
-$sql = "SELECT distance, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 50"; // Limit to the latest 50 records
-$result = $conn->query($sql);
-
-// Arrays to store the data for the graph
-$distances = [];
-$timestamps = [];
-
-// Fetch the data into the arrays
-while ($row = $result->fetch_assoc()) {
-    $distances[] = $row['distance'];
-    $timestamps[] = $row['timestamp'];
-}
-
-// Close connection
-$conn->close();
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLIMAS</title>
-
-    <!-- Loading third party fonts -->
-    <link href="http://fonts.googleapis.com/css?family=Roboto:300,400,700|" rel="stylesheet" type="text/css">
-    <link href="fonts/font-awesome.min.css" rel="stylesheet" type="text/css">
-
-    <!-- Loading main css file -->
-    <link rel="stylesheet" href="style.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Body setup */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden; /* Prevent overall page scroll */
-            flex-direction: column;
-        }
-
-        /* Centered title */
-        h1 {
-            text-align: center;  /* Center-align the text horizontally */
-            font-size: 2rem;
-            margin-bottom: 20px;
-        }
-
-        /* Container for the canvas */
-        .chart-container {
-            width: 100%;
-            max-width: 900px; /* Limit maximum width */
-            height: 400px;  /* Set a fixed height */
-            overflow: hidden; /* Prevent canvas from growing beyond container */
-        }
-
-        /* The canvas itself */
-        canvas {
-            width: 100%;
-            height: 100% !important; /* Make canvas fill container */
-            display: block; /* Prevent default inline behavior */
-        }
-
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Level - BLIMAS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.php" class="logo">BLIMAS</a>
+            <ul class="nav-menu">
+                <li><a href="index.php">Dashboard</a></li>
+                <li><a href="temperature.php">Temperature</a></li>
+                <li><a href="humidity.php">Humidity</a></li>
+                <li><a href="water-level.php" class="active">Water Level</a></li>
+                <li><a href="water-temperature.php">Water Temperature</a></li>
+            </ul>
+        </nav>
+    </header>
 
-<div class="site-content">
-    <div class="site-header">
-        <div class="container">
-            <a href="index.html" class="branding">
-                <img src="images/logo.png" alt="" class="logo">
-                <div class="logo-type">
-                    <h1 class="site-title">BLIMAS</h1>
-                    <small class="site-description">Bolgoda Lake Information & Analysis system</small>
+    <main class="main-content page-enter">
+        <h1 class="page-title">Water Level Monitoring</h1>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Water Level Trends</h3>
+                <div class="time-selector">
+                    <button class="time-btn active" onclick="loadWaterLevelChart(this, 6)">6H</button>
+                    <button class="time-btn" onclick="loadWaterLevelChart(this, 24)">24H</button>
+                    <button class="time-btn" onclick="loadWaterLevelChart(this, 72)">3D</button>
+                    <button class="time-btn" onclick="loadWaterLevelChart(this, 168)">7D</button>
                 </div>
-            </a>
-
-            <!-- Default snippet for navigation -->
-            <div class="main-navigation">
-                <button type="button" class="menu-toggle"><i class="fa fa-bars"></i></button>
-                <ul class="menu">
-                    <li class="menu-item"><a href="index.html">Home</a></li>
-                    <li class="menu-item current-menu-item"><a href="water-level.php">Water Level</a></li>
-                    <li class="menu-item"><a href="temp.php">Temperature</a></li>
-					<li class="menu-item"><a href="humidity.php">Humidity</a></li>
-					<li class="menu-item"><a href="watertmp.php">Water Temparature</a></li>
-                </ul> <!-- .menu -->
-            </div> <!-- .main-navigation -->
-
-            <div class="mobile-navigation"></div>
-        </div>
-    </div> <!-- .site-header -->
-
-    <main class="main-content">
-        <div class="container">
-            <div class="breadcrumb">
-                <a href="index.html">Home</a>
-                <span>Water Level</span>
+            </div>
+            <div style="height: 400px;">
+                <canvas id="water-level-chart"></canvas>
             </div>
         </div>
-        <div class="container">
-            <h1>Water Level Over Time</h1>
+
+        <div class="dashboard-grid">
+            <div class="data-card">
+                <div class="card-header">
+                    <div class="card-icon">🌊</div>
+                    <div class="card-title">Current Level</div>
+                </div>
+                <div class="card-value" id="current-level">--.-</div>
+                <div class="card-unit">m</div>
+            </div>
+            <div class="data-card">
+                <div class="card-header">
+                    <div class="card-icon">📈</div>
+                    <div class="card-title">24H Maximum</div>
+                </div>
+                <div class="card-value" id="max-level">--.-</div>
+                <div class="card-unit">m</div>
+            </div>
+            <div class="data-card">
+                <div class="card-header">
+                    <div class="card-icon">📉</div>
+                    <div class="card-title">24H Minimum</div>
+                </div>
+                <div class="card-value" id="min-level">--.-</div>
+                <div class="card-unit">m</div>
+            </div>
         </div>
-    </main> <!-- .main-content -->
+    </main>
 
-    <!-- Container for the canvas, now we limit the height and prevent stretching -->
-    <div class="chart-container">
-        <canvas id="distanceChart"></canvas>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/main.js"></script>
     <script>
-        // Get PHP data and pass to JavaScript
-        var distances = <?php echo json_encode($distances); ?>;
-        var timestamps = <?php echo json_encode($timestamps); ?>;
-
-        // Format timestamps for readability
-        var formattedTimestamps = timestamps.map(function(timestamp) {
-            var date = new Date(timestamp);
-            return date.toLocaleString();  // Converts timestamp to a readable date/time string
-        });
-
-        // Get the canvas context
-        var ctx = document.getElementById('distanceChart').getContext('2d');
-
-        // Create the chart
-        var distanceChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: formattedTimestamps,
-                datasets: [{
-                    label: 'Distance',
-                    data: distances,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,  // Allow the chart to use full container size
-                scales: {
-                    x: {
-                        ticks: {
-                            autoSkip: true,
-                            maxRotation: 90,
-                            minRotation: 45
-                        }
-                    },
-                    y: {
-                        beginAtZero: false
-                    }
+        async function loadWaterLevelChart(button, hours) {
+            // Update active button
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Show loading
+            const chartContainer = document.getElementById('water-level-chart').parentElement;
+            chartContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const data = await window.chartManager.loadHistoricalData('water_level', hours);
+                
+                // Restore canvas
+                chartContainer.innerHTML = '<canvas id="water-level-chart"></canvas>';
+                
+                if (data.length > 0) {
+                    window.chartManager.createLineChart('water-level-chart', data, 'Water Level (m)', '#4BC0C0');
+                    updateWaterLevelStats(data);
+                } else {
+                    chartContainer.innerHTML = '<div class="text-center">No data available for the selected time period</div>';
                 }
+            } catch (error) {
+                console.error('Error loading water level chart:', error);
+                chartContainer.innerHTML = '<div class="text-center">Error loading chart data</div>';
             }
+        }
+
+        function updateWaterLevelStats(data) {
+            if (data.length === 0) return;
+            
+            const values = data.map(item => parseFloat(item.value));
+            const current = values[values.length - 1];
+            const max = Math.max(...values);
+            const min = Math.min(...values);
+            
+            document.getElementById('current-level').textContent = current.toFixed(2);
+            document.getElementById('max-level').textContent = max.toFixed(2);
+            document.getElementById('min-level').textContent = min.toFixed(2);
+        }
+
+        // Load initial chart when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const activeButton = document.querySelector('.time-btn.active');
+                loadWaterLevelChart(activeButton, 6);
+            }, 500);
         });
     </script>
-
-    <footer class="site-footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-8">
-                    <form action="#" class="subscribe-form">
-                        <input type="text" placeholder="Enter your email to subscribe...">
-                        <input type="submit" value="Subscribe">
-                    </form>
-                </div>
-                <div class="col-md-3 col-md-offset-1">
-                    <div class="social-links">
-                        <a href="#"><i class="fa fa-facebook"></i></a>
-                        <a href="#"><i class="fa fa-twitter"></i></a>
-                        <a href="#"><i class="fa fa-google-plus"></i></a>
-                        <a href="#"><i class="fa fa-pinterest"></i></a>
-                    </div>
-                </div>
-            </div>
-
-            <p class="colophon">Copyright 2014 Circuit Sages. Designed by Circuit Sages. All rights reserved</p>
-        </div>
-    </footer> <!-- .site-footer -->
-</div>
-
-<script src="js/jquery-1.11.1.min.js"></script>
-<script src="js/plugins.js"></script>
-<script src="js/app.js"></script>
-
 </body>
 </html>
