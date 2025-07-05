@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Battery Status Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -31,7 +32,7 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .form-container {
+        .chart-container {
             background: rgba(255, 255, 255, 0.95);
             padding: 30px;
             border-radius: 15px;
@@ -40,75 +41,17 @@
             backdrop-filter: blur(10px);
         }
 
-        .form-container h2 {
+        .chart-container h2 {
             color: #333;
             margin-bottom: 20px;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
         }
 
-        .form-row {
-            display: flex;
-            gap: 20px;
-            align-items: center;
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        label {
-            font-weight: 600;
-            color: #555;
-        }
-
-        input[type="number"] {
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-            width: 120px;
-        }
-
-        input[type="number"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #667eea;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #28a745;
         }
 
         .records-section {
@@ -198,11 +141,6 @@
             font-style: italic;
         }
 
-        .battery-icon {
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
         .no-records {
             text-align: center;
             color: #666;
@@ -212,17 +150,12 @@
         }
 
         @media (max-width: 768px) {
-            .form-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            input[type="number"] {
-                width: 100%;
-            }
-
             h1 {
                 font-size: 2rem;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
             }
         }
     </style>
@@ -231,24 +164,6 @@
     <div class="container">
         <h1>🔋 Battery Status Monitor</h1>
         
-        <!-- Add new battery status -->
-        <div class="form-container">
-            <h2>Add New Battery Status</h2>
-            <form method="POST">
-                <div class="form-row">
-                    <label>Battery Percentage:</label>
-                    <input type="number" name="battery_percentage" min="0" max="100" placeholder="0-100" required>
-                    
-                    <div class="checkbox-container">
-                        <input type="checkbox" name="is_charging" value="1" id="charging">
-                        <label for="charging">Currently Charging</label>
-                    </div>
-                    
-                    <button type="submit">Add Status</button>
-                </div>
-            </form>
-        </div>
-
         <?php
         // Database connection
         $servername = "localhost";
@@ -260,28 +175,41 @@
             $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            // Handle form submission
-            if ($_POST) {
-                $battery_percentage = $_POST['battery_percentage'];
-                $is_charging = isset($_POST['is_charging']) ? 1 : 0;
+            // Fetch battery status records for chart
+            $stmt = $pdo->query("SELECT * FROM battery_status ORDER BY timestamp ASC LIMIT 50");
+            $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (count($records) > 0) {
+                // Prepare data for chart
+                $timestamps = [];
+                $batteryLevels = [];
+                $chargingStatus = [];
                 
-                $stmt = $pdo->prepare("INSERT INTO battery_status (battery_percentage, is_charging) VALUES (?, ?)");
-                $stmt->execute([$battery_percentage, $is_charging]);
+                foreach ($records as $record) {
+                    $timestamps[] = date('M j, H:i', strtotime($record['timestamp']));
+                    $batteryLevels[] = $record['battery_percentage'];
+                    $chargingStatus[] = $record['is_charging'];
+                }
                 
-                echo "<div class='success-message'>✅ Battery status added successfully!</div>";
+                echo "<div class='chart-container'>";
+                echo "<h2>📈 Battery Level Trend</h2>";
+                echo "<div class='chart-wrapper'>";
+                echo "<canvas id='batteryChart'></canvas>";
+                echo "</div>";
+                echo "</div>";
             }
 
-            // Fetch and display battery status records
+            // Fetch recent records for display
             $stmt = $pdo->query("SELECT * FROM battery_status ORDER BY timestamp DESC LIMIT 20");
-            $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $recentRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo "<div class='records-section'>";
             echo "<h2>📊 Recent Battery Status</h2>";
             
-            if (count($records) > 0) {
+            if (count($recentRecords) > 0) {
                 echo "<div class='records-grid'>";
                 
-                foreach ($records as $record) {
+                foreach ($recentRecords as $record) {
                     $chargingClass = $record['is_charging'] ? 'charging' : 'not-charging';
                     $chargingText = $record['is_charging'] ? '⚡ Charging' : '🔌 Not Charging';
                     $batteryIcon = $record['battery_percentage'] > 75 ? '🔋' : 
@@ -297,7 +225,7 @@
                 
                 echo "</div>";
             } else {
-                echo "<div class='no-records'>No battery status records found. Add your first record above!</div>";
+                echo "<div class='no-records'>No battery status records found.</div>";
             }
             
             echo "</div>";
@@ -309,5 +237,95 @@
         }
         ?>
     </div>
+
+    <?php if (isset($timestamps) && count($timestamps) > 0): ?>
+    <script>
+        const ctx = document.getElementById('batteryChart').getContext('2d');
+        const timestamps = <?php echo json_encode($timestamps); ?>;
+        const batteryLevels = <?php echo json_encode($batteryLevels); ?>;
+        const chargingStatus = <?php echo json_encode($chargingStatus); ?>;
+        
+        // Create background colors based on charging status
+        const backgroundColors = chargingStatus.map(isCharging => 
+            isCharging ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)'
+        );
+        
+        const borderColors = chargingStatus.map(isCharging => 
+            isCharging ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'
+        );
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: 'Battery Level (%)',
+                    data: batteryLevels,
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: borderColors,
+                    pointBorderColor: borderColors,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                return chargingStatus[index] ? '⚡ Charging' : '🔌 Not Charging';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            maxTicksLimit: 8,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    <?php endif; ?>
 </body>
 </html>
