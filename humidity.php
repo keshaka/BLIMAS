@@ -10,6 +10,11 @@
     <header class="header">
         <nav class="nav-container">
             <a href="index.php" class="logo">BLIMAS</a>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
             <ul class="nav-menu">
                 <li><a href="index.php">Dashboard</a></li>
                 <li><a href="temperature.php">Temperature</a></li>
