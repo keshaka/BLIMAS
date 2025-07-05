@@ -15,22 +15,25 @@ try {
     
     switch($type) {
         case 'temperature':
-            $query .= "air_temperature as value";
+            $query .= "air_temperature as value FROM sensor_data";
             break;
         case 'humidity':
-            $query .= "humidity as value";
+            $query .= "humidity as value FROM sensor_data";
             break;
         case 'water_level':
-            $query .= "water_level as value";
+            $query .= "water_level as value FROM sensor_data";
             break;
         case 'water_temperature':
-            $query .= "water_temp_depth1, water_temp_depth2, water_temp_depth3";
+            $query .= "water_temp_depth1, water_temp_depth2, water_temp_depth3 FROM sensor_data";
+            break;
+        case 'battery':
+            $query .= "battery_level as value FROM battery_status";
             break;
         default:
-            $query .= "air_temperature as value";
+            $query .= "air_temperature as value FROM sensor_data";
     }
     
-    $query .= " FROM sensor_data WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? HOUR) ORDER BY timestamp ASC";
+    $query .= " WHERE timestamp >= DATE_SUB(NOW(), INTERVAL ? HOUR) ORDER BY timestamp ASC";
     
     $stmt = $db->prepare($query);
     $stmt->bindParam(1, $hours);
