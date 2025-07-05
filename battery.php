@@ -254,7 +254,7 @@
         $servername = "localhost";
         $username = "root";
         $password = "";
-        $dbname = "battery_db";
+        $dbname = "blimas_db";
 
         try {
             $pdo = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
