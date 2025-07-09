@@ -20,11 +20,11 @@ char uni_password[64] = "";
 
 // Captive portal login
 char login_url[128] = "https://wlan.uom.lk/login.html";
-char username[64] = "";
-char user_password[64] = "";
+char username[64] = "udithyamgki.23";
+char user_password[64] = "Alohomora$3552";
 
 // Remote server
-char serverURL[128] = "https://blimas.live/upload.php";
+char serverURL[128] = "http://13.229.94.238/upload.php";
 
 WiFiClientSecure client;
 WebServer server(80);
@@ -197,6 +197,9 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
         mdisplay.drawString(0, 30, "Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
         sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat);
+      }
+      else {
+        mdisplay.drawString(0, 20, "Connections are OK!");
       }
     }
     mdisplay.display();
