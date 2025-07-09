@@ -24,7 +24,7 @@ char username[64] = "";
 char user_password[64] = "";
 
 // Remote server
-char serverURL[128] = "https://webpojja.pasgorasa.site/upload.php";
+char serverURL[128] = "https://blimas.live/upload.php";
 
 WiFiClientSecure client;
 WebServer server(80);
@@ -46,10 +46,10 @@ int bat;
 static RadioEvents_t RadioEvents;
 bool apMode = true;
 
-// Add to the top: Global HTML and style definition
+// Global HTML and style definition
 const char* style = "<style>body{font-family:Arial;background:#f4f4f4;margin:0;padding:20px;}h1{color:#333;}form{background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}input[type=text],input[type=password]{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:4px;}input[type=submit]{background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;}input[type=submit]:hover{background-color:#45a049}</style>";
 
-// New page: handleConfigPage
+// handleConfigPage
 void handleConfigPage() {
   String html = "<html><head><title>Configuration</title>";
   html += style;
@@ -66,7 +66,7 @@ void handleConfigPage() {
   server.send(200, "text/html", html);
 }
 
-// New handler: Save config
+// Save config
 void handleSaveConfig() {
   if (server.hasArg("ap_password")) strncpy((char*)ap_password, server.arg("ap_password").c_str(), sizeof(ap_password));
   if (server.hasArg("username")) strncpy((char*)username, server.arg("username").c_str(), sizeof(username));
