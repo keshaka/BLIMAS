@@ -1,58 +1,52 @@
 <?php
 // Database credentials
-$host = 'database-1.c3e8ygu8uk3t.eu-north-1.rds.amazonaws.com';
-$db = 'blimas';
-$user = 'admin';
-$pass = 'kakkabetta123';
-$charset = 'utf8mb4';
+$host = "localhost";
+$user = "your_db_username";
+$password = "your_db_password";
+$database = "your_database_name";
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
+// Create connection
+$conn = new mysqli($host, $user, $password, $database);
 
-try {
-    // Connect to DB
-    $pdo = new PDO($dsn, $user, $pass, $options);
-
-    // Check if required data is present
-    if (
-        isset($_POST['water_temp1']) &&
-        isset($_POST['water_temp2']) &&
-        isset($_POST['water_temp3']) &&
-        isset($_POST['humidity']) &&
-        isset($_POST['air_temp']) &&
-        isset($_POST['water_level']) &&
-        isset($_POST['battery_level'])
-    ) {
-        // Prepare SQL insert
-        $stmt = $pdo->prepare("INSERT INTO sensor_data (water_temp1, water_temp2, water_temp3, humidity, air_temp, water_level, battery_level)
-                               VALUES (?, ?, ?, ?, ?, ?, ?)");
-
-        $stmt->execute([
-            $_POST['water_temp1'],
-            $_POST['water_temp2'],
-            $_POST['water_temp3'],
-            $_POST['humidity'],
-            $_POST['air_temp'],
-            $_POST['water_level'],
-            $_POST['battery_level']
-        ]);
-
-        echo "Data inserted successfully.";
-
-        // Create log line
-        $timestamp = date("Y-m-d H:i:s");
-        $log_line = "$timestamp, T1:{$_POST['water_temp1']}, T2:{$_POST['water_temp2']}, T3:{$_POST['water_temp3']}, AirT:{$_POST['air_temp']}, H:{$_POST['humidity']}, W:{$_POST['water_level']}, B:{$_POST['battery_level']}\n";
-
-        // Append to file
-        file_put_contents('sensor_log.txt', $log_line, FILE_APPEND | LOCK_EX);
-    } else {
-        echo "Missing POST data.";
-    }
-} catch (PDOException $e) {
-    echo "Database error: " . $e->getMessage();
+// Check connection
+if ($conn->connect_error) {
+    http_response_code(500);
+    die("Connection failed: " . $conn->connect_error);
 }
+
+// Get POST data and sanitize
+$water_temp1 = isset($_POST['water_temp1']) ? floatval($_POST['water_temp1']) : null;
+$water_temp2 = isset($_POST['water_temp2']) ? floatval($_POST['water_temp2']) : null;
+$water_temp3 = isset($_POST['water_temp3']) ? floatval($_POST['water_temp3']) : null;
+$humidity     = isset($_POST['humidity'])     ? floatval($_POST['humidity'])     : null;
+$air_temp     = isset($_POST['air_temp'])     ? floatval($_POST['air_temp'])     : null;
+$water_level  = isset($_POST['water_level'])  ? floatval($_POST['water_level'])  : null;
+$battery_level = isset($_POST['battery_level']) ? intval($_POST['battery_level']) : null;
+
+// Validate required fields
+if ($water_temp1 === null || $water_temp2 === null || $water_temp3 === null ||
+    $humidity === null || $air_temp === null || $water_level === null || $battery_level === null) {
+    http_response_code(400);
+    echo "Missing required fields.";
+    exit;
+}
+
+// Insert into sensor_data table
+$sensor_sql = "INSERT INTO sensor_data (air_temperature, humidity, water_level, water_temp_depth1, water_temp_depth2, water_temp_depth3) 
+               VALUES (?, ?, ?, ?, ?, ?)";
+$sensor_stmt = $conn->prepare($sensor_sql);
+$sensor_stmt->bind_param("dddddd", $air_temp, $humidity, $water_level, $water_temp1, $water_temp2, $water_temp3);
+$sensor_stmt->execute();
+
+// Insert into battery_status table
+$battery_sql = "INSERT INTO battery_status (battery_percentage) VALUES (?)";
+$battery_stmt = $conn->prepare($battery_sql);
+$battery_stmt->bind_param("i", $battery_level);
+$battery_stmt->execute();
+
+// Success
+http_response_code(200);
+echo "Data inserted successfully.";
+
+$conn->close();
 ?>
