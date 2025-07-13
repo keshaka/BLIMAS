@@ -17,13 +17,14 @@
 #define ECHO_PIN 45     // JSN-SR04T echo pin
 #define VBAT_Read    1
 #define	ADC_Ctrl    37
+#define LED_PIN 40
 
 // LoRa Configurations
 #define RF_FREQUENCY 433300000
 #define TX_OUTPUT_POWER 14
-int LORA_SPREADING_FACTOR = 12;
+#define LORA_SPREADING_FACTOR 12
 
-#define sleepTime 5
+#define sleepTime 5  // minutes
 
 // Initialize Sensors   
 OneWire oneWire(ONE_WIRE_BUS);
@@ -36,11 +37,6 @@ char txpacket[100];
 char rxpacket[100];
 static RadioEvents_t RadioEvents;
 
-// Function Prototypes
-void readSensors();
-void sendLoRaData();
-void displayData();
-
 int voltageToPercent(float voltage) {
   if (voltage >= 4.2) return 100;
   else if (voltage >= 4.0) return 85 + (voltage - 4.0) * 75;
@@ -49,19 +45,6 @@ int voltageToPercent(float voltage) {
   else if (voltage >= 3.5) return 15 + (voltage - 3.5) * 125;
   else if (voltage >= 3.3) return 5 + (voltage - 3.3) * 50;
   else return 0;
-}
-
-
-void VextON(void)
-{
-  pinMode(Vext,OUTPUT);
-  digitalWrite(Vext, LOW);
-}
-
-void VextOFF(void) //Vext default OFF
-{
-  pinMode(Vext,OUTPUT);
-  digitalWrite(Vext, HIGH);
 }
 
 int readBatteryVoltage() {
@@ -89,46 +72,6 @@ int readBatteryVoltage() {
   //    delay(10000);
 }
 
-void setup() {
-    Serial.begin(115200);
-    VextON();
-    ds18b20.begin();
-    dht.begin();
-    pinMode(TRIG_PIN, OUTPUT);
-    pinMode(ECHO_PIN, INPUT);
-
-    mdisplay.init();
-    mdisplay.clear();
-    mdisplay.display();
-    mdisplay.drawString(0, 0, "BLIMAS data collector");
-    mdisplay.drawString(0, 10, "Initializing...");
-    mdisplay.display();
-
-    // LoRa Setup
-    Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
-    RadioEvents.TxDone = [](){ Serial.println("LoRa TX Done"); };
-    Radio.Init(&RadioEvents);
-    Radio.SetChannel(RF_FREQUENCY);
-    Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, 0, LORA_SPREADING_FACTOR, 1, 8, false, true, 0, 0, false, 3000);
-
-    pinMode(ADC_Ctrl,OUTPUT);
-    pinMode(VBAT_Read,INPUT);
-    //adcAttachPin(VBAT_Read);
-    analogReadResolution(12);
-}
-
-void loop() {
-    readSensors();
-    displayData();
-    sendLoRaData();
-    delay(5000);
-
-    // Configure deep sleep
-    Serial.println("Going to deep sleep...");
-    esp_sleep_enable_timer_wakeup(sleepTime * 1 * 60 * 1000000);
-    esp_deep_sleep_start();
-}
-
 void readSensors() {
     ds18b20.requestTemperatures();
     float temp1 = ds18b20.getTempCByIndex(0);
@@ -145,6 +88,7 @@ void readSensors() {
     digitalWrite(TRIG_PIN, LOW);
     long duration = pulseIn(ECHO_PIN, HIGH);
     float waterLevel = duration * 0.034 / 2;
+
     int btrl = readBatteryVoltage();
 
     if (temp1==-127.00) {
@@ -172,7 +116,13 @@ void readSensors() {
         waterLevel = waterLevel;
     }
     else {
-        waterLevel = 0;
+        digitalWrite(TRIG_PIN, LOW);
+        delayMicroseconds(2);
+        digitalWrite(TRIG_PIN, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(TRIG_PIN, LOW);
+        long duration = pulseIn(ECHO_PIN, HIGH);
+        float waterLevel = duration * 0.034 / 2;
     }
 
     snprintf(txpacket, sizeof(txpacket), "LM|3552|T1:%.2f,T2:%.2f,T3:%.2f,AirT:%.2f,H:%.2f,W:%.2f,B:%d",
@@ -200,4 +150,48 @@ void displayData() {
 void sendLoRaData() {
     Serial.printf("Sending LoRa: %s\n", txpacket);
     Radio.Send((uint8_t *)txpacket, strlen(txpacket));
+    digitalWrite(LED_PIN, HIGH);
+    delay(500);
 }
+
+void setup() {
+    Serial.begin(115200);
+    ds18b20.begin();
+    dht.begin();
+    pinMode(TRIG_PIN, OUTPUT);
+    pinMode(ECHO_PIN, INPUT);
+
+    mdisplay.init();
+    mdisplay.clear();
+    mdisplay.display();
+    mdisplay.drawString(0, 0, "BLIMAS data collector");
+    mdisplay.drawString(0, 10, "Initializing...");
+    mdisplay.display();
+
+    // LoRa Setup
+    Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
+    RadioEvents.TxDone = [](){ Serial.println("LoRa TX Done"); };
+    Radio.Init(&RadioEvents);
+    Radio.SetChannel(RF_FREQUENCY);
+    Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, 0, LORA_SPREADING_FACTOR, 1, 8, false, true, 0, 0, false, 3000);
+
+    pinMode(ADC_Ctrl,OUTPUT);
+    pinMode(VBAT_Read,INPUT);
+    //adcAttachPin(VBAT_Read);
+    analogReadResolution(12);
+    pinMode(LED_PIN, OUTPUT);
+}
+
+void loop() {
+    delay(1000);
+    readSensors();
+    displayData();
+    sendLoRaData();
+    delay(5000);
+
+    // Configure deep sleep
+    Serial.println("Going to deep sleep...");
+    esp_sleep_enable_timer_wakeup(sleepTime * 60 * 1000000);
+    esp_deep_sleep_start();
+}
+

@@ -8,8 +8,8 @@
 #include <SPI.h>
 
 // WiFi credentials
-const char* ssid = "UoM_Wireless";
-const char* password = "";
+const char* ssid = "Keshaka";
+const char* password = "Qwer3552";
 
 // TFT and Touchscreen
 TFT_eSPI tft = TFT_eSPI();
@@ -248,7 +248,7 @@ void button3() {
 // --- Fetch and Fill Charts from Database ---
 void fetchChartData() {
   HTTPClient http;
-  http.begin("https://webpojja.pasgorasa.site/cyd.php");
+  http.begin("https://blimas.live/cyd.php");
   int httpCode = http.GET();
 
   if (httpCode == 200) {
@@ -277,7 +277,7 @@ void fetchChartData() {
 
 void fetchData() {
   HTTPClient http;
-  http.begin("https://webpojja.pasgorasa.site/cyd.php"); // 🔁 Replace with actual URL
+  http.begin("https://blimas.live/cyd.php"); // 
   int httpCode = http.GET();
 
   if (httpCode == 200) {
@@ -395,10 +395,12 @@ void setup() {
   digitalWrite(CYD_LED_GREEN, HIGH);
   digitalWrite(CYD_LED_BLUE, HIGH);
   digitalWrite(CYD_LED_RED, HIGH);
+
+  fetchData();
 }
 
 void loop() {
-  static unsigned long lastUpdate = 0;
+  /*static unsigned long lastUpdate = 0;
 
   if (millis() - lastUpdate > 1000) {
     lastUpdate = millis();
@@ -425,7 +427,7 @@ void loop() {
     fetchData();
     //showDataScreen(NULL);
     showMainScreen();
-  }
+  }*/
   
 
   lv_task_handler();
