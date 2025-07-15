@@ -21,7 +21,7 @@
 
 // LoRa Configurations
 #define RF_FREQUENCY 433300000
-#define TX_OUTPUT_POWER 14
+#define TX_OUTPUT_POWER 20
 #define LORA_SPREADING_FACTOR 12
 
 #define sleepTime 5  // minutes
@@ -72,6 +72,34 @@ int readBatteryVoltage() {
   //    delay(10000);
 }
 
+float measureWaterLevel() {
+  float waterLevel = 0;
+  int maxTries = 5;
+  int attempt = 0;
+
+  while (attempt < maxTries) {
+    // Trigger the sensor
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    // Read the echo
+    long duration = pulseIn(ECHO_PIN, HIGH, 30000); // 30ms timeout for safety
+    waterLevel = duration * 0.034 / 2;
+
+    if (waterLevel > 0) {
+      break;  // Valid measurement, exit loop
+    }
+
+    attempt++;
+    delay(50); // Small delay between retries
+  }
+
+  return waterLevel;
+}
+
 void readSensors() {
     ds18b20.requestTemperatures();
     float temp1 = ds18b20.getTempCByIndex(0);
@@ -81,13 +109,7 @@ void readSensors() {
     float humidity = dht.readHumidity();
 
     // Water level measurement
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-    long duration = pulseIn(ECHO_PIN, HIGH);
-    float waterLevel = duration * 0.034 / 2;
+    float waterLevel = 207 - measureWaterLevel();
 
     int btrl = readBatteryVoltage();
 
@@ -112,18 +134,7 @@ void readSensors() {
     else {
         humidity = 0;
     }
-    if (waterLevel>0) {
-        waterLevel = waterLevel;
-    }
-    else {
-        digitalWrite(TRIG_PIN, LOW);
-        delayMicroseconds(2);
-        digitalWrite(TRIG_PIN, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(TRIG_PIN, LOW);
-        long duration = pulseIn(ECHO_PIN, HIGH);
-        float waterLevel = duration * 0.034 / 2;
-    }
+
 
     snprintf(txpacket, sizeof(txpacket), "LM|3552|T1:%.2f,T2:%.2f,T3:%.2f,AirT:%.2f,H:%.2f,W:%.2f,B:%d",
              temp1, temp2, temp3, airTemp, humidity, waterLevel, btrl);

@@ -11,12 +11,12 @@
 #include "HT_SSD1306Wire.h"
 
 // Access Point config
-const char* ap_ssid = "blimas";
-const char* ap_password = "";
+const char* ap_ssid = "BLIMAS";
+const char* ap_password = "Qwer3552";
 
 // University WiFi config
-char uni_ssid[32] = "Keshaka";
-char uni_password[64] = "Qwer3552";
+char uni_ssid[32] = "UoM_Wireless";
+char uni_password[64] = "";
 
 // Captive portal login
 char login_url[128] = "https://wlan.uom.lk/login.html";
@@ -24,7 +24,7 @@ char username[64] = "udithyamgki.23";
 char user_password[64] = "Alohomora$3552";
 
 // Remote server
-char serverURL[128] = "https://blimas.live/upload.php";
+char serverURL[128] = "http://128.199.164.89/upload.php";
 
 WiFiClientSecure client;
 WebServer server(80);
@@ -112,8 +112,8 @@ void connectToUniversityWiFi() {
     }
   } else {
     Serial.println("Failed to connect to university WiFi");
-    Serial.println("Retrying in 10 minutes");
-    delay(10 * 60 * 1000);
+    Serial.println("Retrying in 1 minute");
+    delay(1 * 60 * 1000);
     connectToUniversityWiFi();
   }
 }
@@ -176,30 +176,37 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
   https.end();
 }
 
-void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat) {
+void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverURL);
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     String postData = "water_temp1=" + String(temp1) + "&water_temp2=" + String(temp2) +
-                      "&water_temp3=" + String(temp3) + "&humidity=" + String(humidity) +
-                      "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance) + "&battery_level=" + String(bat);
+                  "&water_temp3=" + String(temp3) + "&humidity=" + String(humidity) +
+                  "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance) +
+                  "&battery_level=" + String(bat) + "&rssi=" + String(rssi);
+
     int httpResponseCode = http.POST(postData);
     Serial.println("HTTP Response: " + String(httpResponseCode));
     if (httpResponseCode == 200) {
       mdisplay.drawString(0, 50, "Data uploaded successfully");
+      Serial.println("Data uploaded successfully");
     } else {
       mdisplay.clear();
       mdisplay.drawString(0, 0, "Data upload failed");
+      Serial.println("Data uploaded failed");
       mdisplay.drawString(0, 10, "Checking connections");
+      Serial.println("Checking connections");
       if (WiFi.status() == WL_CONNECTED && isCaptivePortal()) {
         mdisplay.drawString(0, 20, "Captive portal detected");
         mdisplay.drawString(0, 30, "Login to portal");
+        Serial.println("Captive portal detected. Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
         sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat);
       }
       else {
         mdisplay.drawString(0, 20, "Connections are OK!");
+        Serial.println("Connections are OK.");
       }
     }
     mdisplay.display();
@@ -258,7 +265,7 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   mdisplay.display();
   stopHotspot();
   connectToUniversityWiFi();
-  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat);
+  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
   disconnectWiFi();
   setupHotspot();
   lora_idle = true;

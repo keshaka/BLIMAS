@@ -8,8 +8,8 @@
 #include <SPI.h>
 
 // WiFi credentials
-const char* ssid = "Keshaka";
-const char* password = "Qwer3552";
+const char* ssid = "UoM_Wireless";
+const char* password = "";
 
 // TFT and Touchscreen
 TFT_eSPI tft = TFT_eSPI();
