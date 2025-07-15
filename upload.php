@@ -1,9 +1,9 @@
 <?php
 // Database credentials
 $host = "localhost";
-$user = "your_db_username";
-$password = "your_db_password";
-$database = "your_database_name";
+$user = "root";
+$password = "Qwer3552";
+$database = "blimas_db";
 
 // Create connection
 $conn = new mysqli($host, $user, $password, $database);
@@ -22,10 +22,12 @@ $humidity     = isset($_POST['humidity'])     ? floatval($_POST['humidity'])    
 $air_temp     = isset($_POST['air_temp'])     ? floatval($_POST['air_temp'])     : null;
 $water_level  = isset($_POST['water_level'])  ? floatval($_POST['water_level'])  : null;
 $battery_level = isset($_POST['battery_level']) ? intval($_POST['battery_level']) : null;
+$rssi = isset($_POST['rssi']) ? intval($_POST['rssi']) : null;
 
 // Validate required fields
 if ($water_temp1 === null || $water_temp2 === null || $water_temp3 === null ||
-    $humidity === null || $air_temp === null || $water_level === null || $battery_level === null) {
+    $humidity === null || $air_temp === null || $water_level === null || 
+    $battery_level === null || $rssi === null) {
     http_response_code(400);
     echo "Missing required fields.";
     exit;
@@ -39,9 +41,9 @@ $sensor_stmt->bind_param("dddddd", $air_temp, $humidity, $water_level, $water_te
 $sensor_stmt->execute();
 
 // Insert into battery_status table
-$battery_sql = "INSERT INTO battery_status (battery_percentage) VALUES (?)";
+$battery_sql = "INSERT INTO battery_status (battery_percentage, rssi) VALUES (?, ?)";
 $battery_stmt = $conn->prepare($battery_sql);
-$battery_stmt->bind_param("i", $battery_level);
+$battery_stmt->bind_param("ii", $battery_level, $rssi);
 $battery_stmt->execute();
 
 // Success
