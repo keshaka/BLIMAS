@@ -301,7 +301,7 @@
             }
 
             // Fetch recent records for display
-            $stmt = $pdo->query("SELECT * FROM battery_status ORDER BY timestamp DESC LIMIT 20");
+            $stmt = $pdo->query("SELECT * FROM battery_status ORDER BY timestamp DESC LIMIT 1");
             $recentRecords = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo "<div class='records-section'>";
