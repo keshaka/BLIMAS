@@ -202,7 +202,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
         mdisplay.drawString(0, 30, "Login to portal");
         Serial.println("Captive portal detected. Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
-        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat);
+        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
       }
       else {
         mdisplay.drawString(0, 20, "Connections are OK!");
