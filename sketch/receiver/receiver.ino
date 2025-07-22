@@ -206,7 +206,9 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
       }
       else {
         mdisplay.drawString(0, 20, "Connections are OK!");
+        mdisplay.drawString(0, 30, "But data upload failed.");
         Serial.println("Connections are OK.");
+        Serial.println("Data upload failed.");
       }
     }
     mdisplay.display();
@@ -227,6 +229,9 @@ void setup() {
   mdisplay.display();
   setupHotspot();
   setupWebServer();
+  mdisplay.clear();
+  mdisplay.drawString(0, 0, "Hotspot started.");
+  mdisplay.drawString(0, 10, "SSID - BLIMAS");
 
   Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
   RadioEvents.RxDone = OnRxDone;
@@ -257,11 +262,15 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
          &temp1, &temp2, &temp3, &tempDHT, &humidity, &distance, &bat);
   Serial.printf("%d\n", bat);
   mdisplay.clear();
+  mdisplay.drawString(0, 0, "Data received");
+  mdisplay.drawString(0, 10, "RSSI: " + String(rssi) + " dBm");
+  /*
   mdisplay.drawString(0, 0, "Lake Monitor - RX");
   mdisplay.drawString(0, 10, "Temp = " + String(tempDHT) + "Humidity = " + String(humidity));
   mdisplay.drawString(0, 20, "Water level = " + String(distance));
   mdisplay.drawString(0, 30, "Water temp = " + String(temp1) + ", " + String(temp2) + ", " + String(temp3));
   mdisplay.drawString(0, 40, "battery: " + String(bat) + "%, RSSI: " + String(rssi) + " dBm");
+  */
   mdisplay.display();
   stopHotspot();
   connectToUniversityWiFi();
