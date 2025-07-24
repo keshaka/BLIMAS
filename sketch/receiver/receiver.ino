@@ -86,6 +86,9 @@ void setupHotspot() {
   IPAddress IP = WiFi.softAPIP();
   Serial.println("AP IP address: ");
   Serial.println(IP);
+  mdisplay.clear();
+  mdisplay.drawString(0, 0, "Hotspot started.");
+  mdisplay.drawString(0, 10, "SSID - BLIMAS");
 }
 
 void stopHotspot() {
@@ -177,6 +180,8 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
 }
 
 void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi) {
+  stopHotspot();
+  connectToUniversityWiFi();
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverURL);
@@ -191,6 +196,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
     if (httpResponseCode == 200) {
       mdisplay.drawString(0, 50, "Data uploaded successfully");
       Serial.println("Data uploaded successfully");
+      delay(5000);
     } else {
       mdisplay.clear();
       mdisplay.drawString(0, 0, "Data upload failed");
@@ -219,6 +225,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
     mdisplay.drawString(0, 0, "WiFi not connected!");
     mdisplay.display();
   }
+  disconnectWiFi();
 }
 
 void handleManualSend() {
@@ -231,10 +238,7 @@ void handleManualSend() {
   int bat = server.arg("bat").toInt();
   int rssi = server.arg("rssi").toInt();
 
-  stopHotspot();
-  connectToUniversityWiFi();
   sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
-  disconnectWiFi();
   setupHotspot();
 
   String html = "<html><head><title>Data Sent</title></head><body>";
@@ -253,9 +257,6 @@ void setup() {
   mdisplay.display();
   setupHotspot();
   setupWebServer();
-  mdisplay.clear();
-  mdisplay.drawString(0, 0, "Hotspot started.");
-  mdisplay.drawString(0, 10, "SSID - BLIMAS");
 
   Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
   RadioEvents.RxDone = OnRxDone;
@@ -299,10 +300,7 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   mdisplay.drawString(0, 40, "battery: " + String(bat) + "%, RSSI: " + String(rssi) + " dBm");
   */
   mdisplay.display();
-  stopHotspot();
-  connectToUniversityWiFi();
   sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
-  disconnectWiFi();
   setupHotspot();
   lora_idle = true;
   digitalWrite(LED, LOW);
