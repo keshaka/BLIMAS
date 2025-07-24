@@ -109,7 +109,7 @@ void readSensors() {
     float humidity = dht.readHumidity();
 
     // Water level measurement
-    float waterLevel = 207 - measureWaterLevel();
+    float waterLevel = 170 - measureWaterLevel();
 
     int btrl = readBatteryVoltage();
 

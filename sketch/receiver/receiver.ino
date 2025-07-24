@@ -24,7 +24,7 @@ char username[64] = "udithyamgki.23";
 char user_password[64] = "Alohomora$3552";
 
 // Remote server
-char serverURL[128] = "http://128.199.164.89/upload.php";
+char serverURL[128] = "http://152.42.181.9/upload.php";
 
 WiFiClientSecure client;
 WebServer server(80);
@@ -221,6 +221,26 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
   }
 }
 
+void handleManualSend() {
+  float temp1 = server.arg("temp1").toFloat();
+  float temp2 = server.arg("temp2").toFloat();
+  float temp3 = server.arg("temp3").toFloat();
+  float humidity = server.arg("humidity").toFloat();
+  float tempDHT = server.arg("tempDHT").toFloat();
+  float distance = server.arg("distance").toFloat();
+  int bat = server.arg("bat").toInt();
+  int rssi = server.arg("rssi").toInt();
+
+  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
+
+  String html = "<html><head><title>Data Sent</title></head><body>";
+  html += "<h1>Test Data Sent to Server</h1>";
+  html += "<a href='/'>Back to Home</a>";
+  html += "</body></html>";
+  server.send(200, "text/html", html);
+}
+
+
 void setup() {
   Serial.begin(115200);
   mdisplay.init();
@@ -241,6 +261,8 @@ void setup() {
                     LORA_CODINGRATE, 0, 8, 0, false,
                     0, true, 0, 0, false, true);
   lora_idle = true;
+  pinMode(LED ,OUTPUT);
+	digitalWrite(LED, LOW);
 }
 
 void loop() {
@@ -253,6 +275,7 @@ void loop() {
 }
 
 void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
+  digitalWrite(LED, HIGH);
   rssi = _rssi;
   memcpy(rxpacket, payload, size);
   rxpacket[size] = 0;
@@ -278,15 +301,33 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   disconnectWiFi();
   setupHotspot();
   lora_idle = true;
+  digitalWrite(LED, LOW);
 }
 
 void handleRoot() {
   String html = "<html><head><title>BLIMAS Data</title>";
   html += style;
   html += "</head><body><h1>Last Received Packet</h1><pre>" + String(rxpacket) + "</pre>";
-  html += "<a href='/config'>Edit Configuration</a></body></html>";
+  html += "<a href='/config'>Edit Configuration</a><br><br>";
+
+  // Form to send data manually
+  html += "<h2>Send Test Data to Server</h2>";
+  html += "<form action='/send' method='POST'>";
+  html += "Temp1: <input type='text' name='temp1'><br>";
+  html += "Temp2: <input type='text' name='temp2'><br>";
+  html += "Temp3: <input type='text' name='temp3'><br>";
+  html += "Humidity: <input type='text' name='humidity'><br>";
+  html += "Air Temp: <input type='text' name='tempDHT'><br>";
+  html += "Water Level: <input type='text' name='distance'><br>";
+  html += "Battery Level: <input type='text' name='bat'><br>";
+  html += "RSSI: <input type='text' name='rssi'><br><br>";
+  html += "<input type='submit' value='Send Data'>";
+  html += "</form>";
+
+  html += "</body></html>";
   server.send(200, "text/html", html);
 }
+
 
 void handleSetFreq() {
   if (server.hasArg("freq")) {
@@ -304,6 +345,7 @@ void setupWebServer() {
   server.on("/", handleRoot);
   server.on("/config", handleConfigPage);
   server.on("/saveconfig", HTTP_POST, handleSaveConfig);
+  server.on("/send", HTTP_POST, handleManualSend);
   server.begin();
   Serial.println("Web server started on hotspot");
 }
