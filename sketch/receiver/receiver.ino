@@ -231,7 +231,11 @@ void handleManualSend() {
   int bat = server.arg("bat").toInt();
   int rssi = server.arg("rssi").toInt();
 
+  stopHotspot();
+  connectToUniversityWiFi();
   sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
+  disconnectWiFi();
+  setupHotspot();
 
   String html = "<html><head><title>Data Sent</title></head><body>";
   html += "<h1>Test Data Sent to Server</h1>";
