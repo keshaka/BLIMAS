@@ -89,6 +89,7 @@ void setupHotspot() {
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Hotspot started.");
   mdisplay.drawString(0, 10, "SSID - BLIMAS");
+  mdisplay.display();
 }
 
 void stopHotspot() {
@@ -102,6 +103,7 @@ void connectToUniversityWiFi() {
   Serial.print("Connecting to university WiFi...");
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Connecting to university WiFi...");
+  mdisplay.display();
   int tries = 0;
   while (WiFi.status() != WL_CONNECTED && tries < 20) {
     delay(500);
@@ -205,6 +207,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
     Serial.println("HTTP Response: " + String(httpResponseCode));
     if (httpResponseCode == 200) {
       mdisplay.drawString(0, 50, "Data uploaded successfully");
+      mdisplay.display();
       Serial.println("Data uploaded successfully");
       delay(5000);
     } else {
@@ -212,10 +215,12 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
       mdisplay.drawString(0, 0, "Data upload failed");
       Serial.println("Data uploaded failed");
       mdisplay.drawString(0, 10, "Checking connections");
+      mdisplay.display();
       Serial.println("Checking connections");
       if (WiFi.status() == WL_CONNECTED && isCaptivePortal()) {
         mdisplay.drawString(0, 20, "Captive portal detected");
         mdisplay.drawString(0, 30, "Login to portal");
+        mdisplay.display();
         Serial.println("Captive portal detected. Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
         sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
@@ -223,11 +228,11 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
       else {
         mdisplay.drawString(0, 20, "Connections are OK!");
         mdisplay.drawString(0, 30, "But data upload failed.");
+        mdisplay.display();
         Serial.println("Connections are OK.");
         Serial.println("Data upload failed.");
       }
     }
-    mdisplay.display();
     http.end();
   } else {
     Serial.println("WiFi not connected!");
