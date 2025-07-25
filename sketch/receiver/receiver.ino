@@ -20,11 +20,11 @@ char uni_password[64] = "";
 
 // Captive portal login
 char login_url[128] = "https://wlan.uom.lk/login.html";
-char username[64] = "udithyamgki.23";
-char user_password[64] = "Alohomora$3552";
+char username[64] = "konarakmrn.23";
+char user_password[64] = "Rn87ysh#16";
 
 // Remote server
-char serverURL[128] = "http://152.42.181.9/upload.php";
+char serverURL[128] = "http://blimas.unilodge.live/upload.php";
 
 WiFiClientSecure client;
 WebServer server(80);
@@ -100,6 +100,8 @@ void connectToUniversityWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(uni_ssid, uni_password);
   Serial.print("Connecting to university WiFi...");
+  mdisplay.clear();
+  mdisplay.drawString(0, 0, "Connecting to university WiFi...");
   int tries = 0;
   while (WiFi.status() != WL_CONNECTED && tries < 20) {
     delay(500);
@@ -108,6 +110,9 @@ void connectToUniversityWiFi() {
   }
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("Connected to university WiFi");
+    mdisplay.clear();
+    mdisplay.drawString(0, 0, "Connected to university WiFi");
+    mdisplay.display();
     if (isCaptivePortal()) {
       loginToCaptivePortal(username, user_password, login_url);
     } else {
@@ -116,6 +121,10 @@ void connectToUniversityWiFi() {
   } else {
     Serial.println("Failed to connect to university WiFi");
     Serial.println("Retrying in 1 minute");
+    mdisplay.clear();
+    mdisplay.drawString(0, 0, "Failed to connect to university WiFi");
+    mdisplay.drawString(0, 10, "Retrying in 1 minute");
+    mdisplay.display();
     delay(1 * 60 * 1000);
     connectToUniversityWiFi();
   }
@@ -161,8 +170,9 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
 
   if (httpResponseCode > 0) {
     Serial.printf("Login response code: %d\n", httpResponseCode);
-    //mdisplay.drawString(0, 20, "Portal login successfull.");
-    //mdisplay.display();
+    mdisplay.clear();
+    mdisplay.drawString(0, 0, "Portal login successfull.");
+    mdisplay.display();
   } else {
     Serial.printf("Login failed: %s\n", https.errorToString(httpResponseCode).c_str());
     mdisplay.clear();
@@ -228,36 +238,28 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
   disconnectWiFi();
 }
 
-void handleManualSend() {
-  float temp1 = server.arg("temp1").toFloat();
-  float temp2 = server.arg("temp2").toFloat();
-  float temp3 = server.arg("temp3").toFloat();
-  float humidity = server.arg("humidity").toFloat();
-  float tempDHT = server.arg("tempDHT").toFloat();
-  float distance = server.arg("distance").toFloat();
-  int bat = server.arg("bat").toInt();
-  int rssi = server.arg("rssi").toInt();
-
-  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
-  setupHotspot();
-
-  String html = "<html><head><title>Data Sent</title></head><body>";
-  html += "<h1>Test Data Sent to Server</h1>";
-  html += "<a href='/'>Back to Home</a>";
-  html += "</body></html>";
-  server.send(200, "text/html", html);
+void checkConnection() {
+  mdisplay.clear();
+  mdisplay.drawString(0, 0, "Checking connections...");
+  mdisplay.display();
+  connectToUniversityWiFi();
+  if (WiFi.status() == WL_CONNECTED) {
+    mdisplay.clear();
+    mdisplay.drawString(0, 0, "Connections are OK");
+    mdisplay.display();
+  }
+  disconnectWiFi();
 }
-
 
 void setup() {
   Serial.begin(115200);
   mdisplay.init();
+  //checkConnection();
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Starting Hotspot...");
   mdisplay.display();
   setupHotspot();
   setupWebServer();
-
   Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
   RadioEvents.RxDone = OnRxDone;
   Radio.Init(&RadioEvents);
@@ -312,20 +314,6 @@ void handleRoot() {
   html += "</head><body><h1>Last Received Packet</h1><pre>" + String(rxpacket) + "</pre>";
   html += "<a href='/config'>Edit Configuration</a><br><br>";
 
-  // Form to send data manually
-  html += "<h2>Send Test Data to Server</h2>";
-  html += "<form action='/send' method='POST'>";
-  html += "Temp1: <input type='text' name='temp1'><br>";
-  html += "Temp2: <input type='text' name='temp2'><br>";
-  html += "Temp3: <input type='text' name='temp3'><br>";
-  html += "Humidity: <input type='text' name='humidity'><br>";
-  html += "Air Temp: <input type='text' name='tempDHT'><br>";
-  html += "Water Level: <input type='text' name='distance'><br>";
-  html += "Battery Level: <input type='text' name='bat'><br>";
-  html += "RSSI: <input type='text' name='rssi'><br><br>";
-  html += "<input type='submit' value='Send Data'>";
-  html += "</form>";
-
   html += "</body></html>";
   server.send(200, "text/html", html);
 }
@@ -347,7 +335,6 @@ void setupWebServer() {
   server.on("/", handleRoot);
   server.on("/config", handleConfigPage);
   server.on("/saveconfig", HTTP_POST, handleSaveConfig);
-  server.on("/send", HTTP_POST, handleManualSend);
   server.begin();
   Serial.println("Web server started on hotspot");
 }
