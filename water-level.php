@@ -16,6 +16,7 @@
                 <li><a href="humidity.php">Humidity</a></li>
                 <li><a href="water-level.php" class="active">Water Level</a></li>
                 <li><a href="water-temperature.php">Water Temperature</a></li>
+                <li><a href="analysis.php">Analysis</a></li>
             </ul>
         </nav>
     </header>
