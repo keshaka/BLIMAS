@@ -6,6 +6,7 @@
     <title>BLIMAS - Bolgoda Lake Monitoring System</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="header">
@@ -101,6 +102,133 @@
                 <div class="depth-label">Bottom (Depth 3)</div>
                 <div class="depth-value" id="water-temp-3">--.-</div>
                 <div class="depth-unit">°C</div>
+            </div>
+        </div>
+
+        <!-- AI Analysis Dashboard Section -->
+        <div class="ai-analysis-section">
+            <h2 class="section-title">🤖 AI Analysis & Predictions</h2>
+            
+            <div class="analysis-tabs">
+                <button class="tab-button active" data-tab="trends">📈 Trends</button>
+                <button class="tab-button" data-tab="predictions">🔮 Predictions</button>
+                <button class="tab-button" data-tab="anomalies">⚠️ Anomalies</button>
+                <button class="tab-button" data-tab="summary">📊 Summary</button>
+            </div>
+
+            <div class="analysis-content">
+                <!-- Trends Tab -->
+                <div class="tab-content active" id="trends-tab">
+                    <div class="analysis-grid">
+                        <div class="analysis-card">
+                            <h3>🌡️ Temperature Trends</h3>
+                            <div class="trend-chart">
+                                <canvas id="temperature-trend-chart"></canvas>
+                            </div>
+                            <div class="ai-insight" id="temperature-trend-insight">
+                                <div class="loading-spinner">Loading AI analysis...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h3>💧 Humidity Patterns</h3>
+                            <div class="trend-chart">
+                                <canvas id="humidity-trend-chart"></canvas>
+                            </div>
+                            <div class="ai-insight" id="humidity-trend-insight">
+                                <div class="loading-spinner">Loading AI analysis...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-card full-width">
+                            <h3>🌊 Water Level & Temperature Analysis</h3>
+                            <div class="trend-chart">
+                                <canvas id="water-analysis-chart"></canvas>
+                            </div>
+                            <div class="ai-insight" id="water-trend-insight">
+                                <div class="loading-spinner">Loading AI analysis...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Predictions Tab -->
+                <div class="tab-content" id="predictions-tab">
+                    <div class="predictions-grid">
+                        <div class="prediction-card">
+                            <h3>📅 24-Hour Forecast</h3>
+                            <div class="prediction-items" id="prediction-24h">
+                                <div class="loading-spinner">Loading predictions...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="prediction-card">
+                            <h3>📈 Prediction Chart</h3>
+                            <div class="prediction-chart">
+                                <canvas id="prediction-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="prediction-card full-width">
+                            <h3>🎯 AI Predictions Summary</h3>
+                            <div class="ai-insight" id="prediction-insight">
+                                <div class="loading-spinner">Loading AI predictions...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anomalies Tab -->
+                <div class="tab-content" id="anomalies-tab">
+                    <div class="anomalies-grid">
+                        <div class="anomaly-card">
+                            <h3>🚨 Real-time Alerts</h3>
+                            <div class="anomaly-alerts" id="anomaly-alerts">
+                                <div class="loading-spinner">Checking for anomalies...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="anomaly-card">
+                            <h3>📉 Anomaly Detection Chart</h3>
+                            <div class="anomaly-chart">
+                                <canvas id="anomaly-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="anomaly-card full-width">
+                            <h3>🔍 AI Anomaly Analysis</h3>
+                            <div class="ai-insight" id="anomaly-insight">
+                                <div class="loading-spinner">Loading anomaly analysis...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Tab -->
+                <div class="tab-content" id="summary-tab">
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <h3>📋 Executive Summary</h3>
+                            <div class="summary-content" id="executive-summary">
+                                <div class="loading-spinner">Generating summary...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <h3>📊 Key Metrics</h3>
+                            <div class="metrics-display" id="key-metrics">
+                                <div class="loading-spinner">Loading metrics...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card full-width">
+                            <h3>💡 AI Recommendations</h3>
+                            <div class="ai-insight" id="summary-recommendations">
+                                <div class="loading-spinner">Loading recommendations...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -332,6 +460,285 @@
 
             .footer-links {
                 justify-content: center;
+            }
+        }
+
+        /* AI Analysis Section Styles */
+        .ai-analysis-section {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .analysis-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: rgba(102, 126, 234, 0.1);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tab-button:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .analysis-grid, .predictions-grid, .anomalies-grid, .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .analysis-card, .prediction-card, .anomaly-card, .summary-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .analysis-card:hover, .prediction-card:hover, .anomaly-card:hover, .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .analysis-card.full-width, .prediction-card.full-width, .anomaly-card.full-width, .summary-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .analysis-card h3, .prediction-card h3, .anomaly-card h3, .summary-card h3 {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .trend-chart, .prediction-chart, .anomaly-chart {
+            height: 250px;
+            margin-bottom: 15px;
+            background: rgba(247, 250, 252, 0.5);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-insight {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .loading-spinner::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .prediction-items {
+            display: grid;
+            gap: 10px;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .prediction-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .prediction-value {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .confidence-badge {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .confidence-badge.medium {
+            background: #f59e0b;
+        }
+
+        .confidence-badge.low {
+            background: #ef4444;
+        }
+
+        .anomaly-alerts {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .anomaly-alert {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .anomaly-alert.medium {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .anomaly-alert.low {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .anomaly-metric {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .anomaly-value {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .anomaly-time {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .summary-content, .metrics-display {
+            line-height: 1.6;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .metric-label {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .status-excellent {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .status-good {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .status-warning {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .analysis-grid, .predictions-grid, .anomalies-grid, .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .analysis-tabs {
+                justify-content: center;
+            }
+            
+            .tab-button {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+            
+            .trend-chart, .prediction-chart, .anomaly-chart {
+                height: 200px;
             }
         }
     </style>
