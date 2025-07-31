@@ -12,8 +12,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 # CONFIGURATION
 # -----------------------------
 
-BOT_TOKEN = '8162818770:AAFJ8g68zhVyId8hdn1AXpu4FbY-IC0ARI8'
-ADMIN_IDS = [1066891806]  # Replace with your Telegram user ID(s)
+BOT_TOKEN = ''
+ADMIN_IDS = []  # Replace with your Telegram user ID(s)
 
 DB_CONFIG = {
     'host': 'localhost',
