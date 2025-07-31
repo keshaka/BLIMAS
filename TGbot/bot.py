@@ -157,7 +157,9 @@ def run_schedule(bot: Bot):
     async def job():
         await check_warnings(bot)
 
-    schedule.every(5).minutes.do(lambda: asyncio.run(job()))
+    import asyncio
+    schedule.every(5).minutes.do(lambda: asyncio.create_task(job()))
+
     while True:
         schedule.run_pending()
         time.sleep(1)
