@@ -102,7 +102,7 @@ class DataAnalysis {
     
     <?php
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['data'])) {
-        $apiKey = 'AIzaSyAu5tclMb7fjkuC57V_0zU2lkviCATNXc4';
+        $apiKey = '';
         $analyzer = new DataAnalysis($apiKey);
         
         $data = $_POST['data'];
