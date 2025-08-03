@@ -23,14 +23,17 @@ try {
     $latest_data = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($latest_data) {
-        echo json_encode([
+        // Add debug information
+        $response = [
             'status' => 'success',
             'data' => $latest_data,
+            'timestamp' => date('Y-m-d H:i:s'),
             'debug' => [
                 'database_type' => $db->getAttribute(PDO::ATTR_DRIVER_NAME),
-                'timestamp' => date('Y-m-d H:i:s')
+                'record_count' => 1
             ]
-        ]);
+        ];
+        echo json_encode($response);
     } else {
         echo json_encode([
             'status' => 'error',
