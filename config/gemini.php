@@ -10,7 +10,7 @@ class GeminiAPI {
 
     public function __construct() {
         // Replace with your actual Gemini API key!
-        $this->apiKey = 'AIzaSyAu5tclMb7fjkuC57V_0zU2lkviCATNXc4';
+        $this->apiKey = 'YOUR_GEMINI_API_KEY_HERE';
     }
 
     public function generateAnalysis($prompt, $opts = []) {

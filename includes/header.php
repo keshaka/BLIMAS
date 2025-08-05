@@ -42,7 +42,7 @@
                         <a class="nav-link" href="index.php"><i class="fas fa-home me-1"></i>Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="air-temperature.php"><i class="fas fa-thermometer-half me-1"></i>Air Temp</a>
+                        <a class="nav-link" href="air-temperature.php"><i class="fas fa-thermometer-half me-1"></i>Air Temperature</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="humidity.php"><i class="fas fa-tint me-1"></i>Humidity</a>
@@ -51,7 +51,7 @@
                         <a class="nav-link" href="water-level.php"><i class="fas fa-chart-line me-1"></i>Water Level</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="water-temperature.php"><i class="fas fa-temperature-low me-1"></i>Water Temp</a>
+                        <a class="nav-link" href="water-temperature.php"><i class="fas fa-temperature-low me-1"></i>Water Temperature</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="analysis.php"><i class="fas fa-brain me-1"></i>AI Analysis</a>

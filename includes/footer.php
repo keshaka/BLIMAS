@@ -7,7 +7,7 @@
                     <p>Bolgoda Lake Information Monitoring and Analysis System</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p>&copy; 2024 BLIMAS. Environmental monitoring made easy.</p>
+                    <p>&copy; 2025 BLIMAS. Created by Circuit Sages.</p>
                 </div>
             </div>
         </div>
