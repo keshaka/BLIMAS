@@ -4,12 +4,17 @@
 #include <WiFi.h>
 #include <time.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
-#include <SPI.h>
 
 // WiFi credentials
-const char* ssid = "Keshaka";
-const char* password = "Qwer3552";
+const char* ssid = "UoM_Wireless";
+const char* password = "";
+char username[64] = "konarakmrn.23";
+char user_password[64] = "Rn87ysh#16";
+char login_url[128] = "https://wlan.uom.lk/login.html";
+
+WiFiClientSecure client;
 
 // TFT and Touchscreen
 TFT_eSPI tft = TFT_eSPI();
@@ -39,10 +44,6 @@ lv_obj_t *timeLabel;
 lv_obj_t *greetingLabel;
 lv_obj_t *airTempLabel, *humidityLabel, *waterLevelLabel;
 lv_obj_t *wt1Label, *wt2Label, *wt3Label;
-lv_obj_t *mainScreen, *dataScreen;
-lv_obj_t *scrollCont;
-lv_obj_t *chartTemp, *chartHum, *chartWL;
-lv_chart_series_t *seriesTemp, *seriesHum, *seriesWL;
 
 // Image headers
 #include <hum.h>
@@ -55,6 +56,50 @@ lv_chart_series_t *seriesTemp, *seriesHum, *seriesWL;
 #include <pwr.h>
 
 // WiFi connection
+void loginToCaptivePortal(const char* username, const char* user_password, const char* login_url) {
+  client.setInsecure();
+  HTTPClient https;
+  https.begin(client, login_url);
+
+  https.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  https.addHeader("Origin", "https://wlan.uom.lk");
+  https.addHeader("Referer", "https://wlan.uom.lk/login.html?redirect=https://www.google.com/search");
+
+  String postData = 
+    "buttonClicked=4"
+    "&err_flag=0"
+    "&err_msg="
+    "&info_flag=0"
+    "&info_msg="
+    "&redirect_url=https%3A%2F%2Fwww.google.com%2Fsearch"
+    "&network_name=Guest+Network"
+    "&username=" + String(username) +
+    "&password=" + String(user_password);
+
+  int httpResponseCode = https.POST(postData);
+
+  if (httpResponseCode > 0) {
+    Serial.printf("Login response code: %d\n", httpResponseCode);
+  } else {
+    Serial.printf("Login failed: %s\n", https.errorToString(httpResponseCode).c_str());
+    delay(10000);
+    if (isCaptivePortal()) {
+      loginToCaptivePortal(username, user_password, login_url);
+    } else {
+      Serial.println("Already authenticated!");
+    }
+  }
+  https.end();
+}
+
+bool isCaptivePortal() {
+  HTTPClient http;
+  http.begin("http://clients3.google.com/generate_204");
+  int httpCode = http.GET();
+  http.end();
+  return httpCode != 204;
+}
+
 void connectToWiFi() {
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
@@ -63,6 +108,11 @@ void connectToWiFi() {
     Serial.print(".");
   }
   Serial.println("\nConnected to WiFi!");
+  if (isCaptivePortal()) {
+      loginToCaptivePortal(username, user_password, login_url);
+    } else {
+      Serial.println("Already authenticated!");
+    }
 }
 
 // NTP time sync
@@ -153,56 +203,6 @@ static void event_handler_btn1(lv_event_t * e) {
   }
 }
 
-// --- Create Data Screen and Charts ---
-void createDataScreen() {
-  dataScreen = lv_obj_create(NULL);  // New screen
-
-  scrollCont = lv_obj_create(dataScreen);
-  lv_obj_set_size(scrollCont, 240, 320);
-  lv_obj_set_scroll_dir(scrollCont, LV_DIR_VER);
-  lv_obj_set_scroll_snap_y(scrollCont, LV_SCROLL_SNAP_CENTER);
-  lv_obj_set_style_bg_color(scrollCont, lv_color_white(), 0);
-  lv_obj_set_style_pad_all(scrollCont, 10, 0);
-
-  // --- Chart: Air Temp ---
-  chartTemp = lv_chart_create(scrollCont);
-  lv_obj_set_size(chartTemp, 220, 100);
-  lv_obj_align(chartTemp, LV_ALIGN_TOP_MID, 0, 0);
-  lv_chart_set_type(chartTemp, LV_CHART_TYPE_LINE);
-  lv_chart_set_point_count(chartTemp, 8);
-  lv_chart_set_range(chartTemp, LV_CHART_AXIS_PRIMARY_Y, 0, 50);
-  seriesTemp = lv_chart_add_series(chartTemp, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
-
-  // --- Chart: Humidity ---
-  chartHum = lv_chart_create(scrollCont);
-  lv_obj_set_size(chartHum, 220, 100);
-  lv_obj_align_to(chartHum, chartTemp, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-  lv_chart_set_type(chartHum, LV_CHART_TYPE_LINE);
-  lv_chart_set_point_count(chartHum, 8);
-  lv_chart_set_range(chartHum, LV_CHART_AXIS_PRIMARY_Y, 0, 100);
-  seriesHum = lv_chart_add_series(chartHum, lv_palette_main(LV_PALETTE_BLUE), LV_CHART_AXIS_PRIMARY_Y);
-
-  // --- Chart: Water Level ---
-  chartWL = lv_chart_create(scrollCont);
-  lv_obj_set_size(chartWL, 220, 100);
-  lv_obj_align_to(chartWL, chartHum, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-  lv_chart_set_type(chartWL, LV_CHART_TYPE_LINE);
-  lv_chart_set_point_count(chartWL, 8);
-  lv_chart_set_range(chartWL, LV_CHART_AXIS_PRIMARY_Y, 0, 200);
-  seriesWL = lv_chart_add_series(chartWL, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
-}
-
-// --- Switch Screens ---
-void showMainScreen() {
-  lv_scr_load(mainScreen);
-}
-
-void showDataScreen(lv_event_t * e) {
-  lv_scr_load(dataScreen);
-  fetchChartData();
-}
-
-
 void button1() {
   lv_obj_t * btn_label;
   lv_obj_t * btn1 = lv_button_create(lv_screen_active());
@@ -220,7 +220,7 @@ void button1() {
 void button2() {
   lv_obj_t * btn_label;
   lv_obj_t * btn1 = lv_button_create(lv_screen_active());
-  lv_obj_add_event_cb(btn1, showDataScreen, LV_EVENT_CLICKED, NULL);
+  lv_obj_add_event_cb(btn1, event_handler_btn1, LV_EVENT_ALL, NULL);
   lv_obj_align(btn1, LV_ALIGN_TOP_LEFT, 193, 5);
   lv_obj_remove_flag(btn1, LV_OBJ_FLAG_PRESS_LOCK);
   lv_obj_set_size(btn1, 61, 26);
@@ -245,39 +245,10 @@ void button3() {
   lv_obj_center(btn_label);
 }
 
-// --- Fetch and Fill Charts from Database ---
-void fetchChartData() {
-  HTTPClient http;
-  http.begin("https://blimas.live/cyd.php");
-  int httpCode = http.GET();
-
-  if (httpCode == 200) {
-    String payload = http.getString();
-    StaticJsonDocument<2048> doc;
-    DeserializationError error = deserializeJson(doc, payload);
-
-    if (!error && doc.is<JsonArray>()) {
-      JsonArray arr = doc.as<JsonArray>();
-      int i = 0;
-      for (JsonObject row : arr) {
-        if (i < 8) {
-          seriesTemp->y_points[i] = row["air_temp"];
-          seriesHum->y_points[i] = row["humidity"];
-          seriesWL->y_points[i] = row["water_level"];
-        }
-        i++;
-      }
-      lv_chart_refresh(chartTemp);
-      lv_chart_refresh(chartHum);
-      lv_chart_refresh(chartWL);
-    }
-  }
-  http.end();
-}
 
 void fetchData() {
   HTTPClient http;
-  http.begin("https://blimas.live/cyd.php"); // 
+  http.begin("https://blimas.site/cyd.php"); // 🔁 Replace with actual URL
   int httpCode = http.GET();
 
   if (httpCode == 200) {
@@ -373,9 +344,6 @@ void setup() {
   lv_obj_align(wt3Label, LV_ALIGN_TOP_LEFT, 65, 186);
   lv_obj_set_style_text_font(wt3Label, &lv_font_montserrat_12, 0);
 
-  mainScreen = lv_scr_act();
-  createDataScreen();
-
   button1();
   button2();
   button3();
@@ -388,19 +356,17 @@ void setup() {
 
   greetingLabel = lv_label_create(lv_screen_active());
   lv_obj_set_style_text_font(greetingLabel, &lv_font_montserrat_16, 0);
-  lv_obj_set_style_text_color(greetingLabel, lv_color_make(0, 0, 0), 0);  // Black
+  lv_obj_set_style_text_color(greetingLabel, lv_color_make(0, 0, 0), 0);
   lv_obj_align(greetingLabel, LV_ALIGN_TOP_LEFT, 18, 45);
 
 
   digitalWrite(CYD_LED_GREEN, HIGH);
   digitalWrite(CYD_LED_BLUE, HIGH);
   digitalWrite(CYD_LED_RED, HIGH);
-
-  fetchData();
 }
 
 void loop() {
-  /*static unsigned long lastUpdate = 0;
+  static unsigned long lastUpdate = 0;
 
   if (millis() - lastUpdate > 1000) {
     lastUpdate = millis();
@@ -425,9 +391,7 @@ void loop() {
     lv_label_set_text(greetingLabel, greeting);
 
     fetchData();
-    //showDataScreen(NULL);
-    showMainScreen();
-  }*/
+  }
   
 
   lv_task_handler();
