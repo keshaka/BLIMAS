@@ -17,6 +17,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/analysis.css">
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
 </head>
 <body>
     <!-- Loader -->
