@@ -7,23 +7,21 @@ import mysql.connector
 from datetime import datetime, timedelta
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import asyncio
 
 # -----------------------------
 # CONFIGURATION
 # -----------------------------
 
-BOT_TOKEN = ''
-ADMIN_IDS = []  # Replace with your Telegram user ID(s)
+BOT_TOKEN = '5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY'  # Your bot token here
+ADMIN_IDS = [1066891806]  # Replace with your Telegram user ID(s)
 
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'Qwer3552',
     'database': 'blimas_db'
 }
-
-WATER_LEVEL_THRESHOLD = 50.00  # Set your water level danger threshold
-LOW_BATTERY_THRESHOLD = 20     # Low battery %
 
 # -----------------------------
 # LOGGING
@@ -59,7 +57,19 @@ def fetch_daily_stats():
             AVG(air_temperature) AS avg_temp,
             MIN(humidity) AS min_humidity,
             MAX(humidity) AS max_humidity,
-            AVG(humidity) AS avg_humidity
+            AVG(humidity) AS avg_humidity,
+            MIN(water_level) AS min_water_level,
+            MAX(water_level) AS max_water_level,
+            AVG(water_level) AS avg_water_level,
+            MIN(water_temp_depth1) AS min_surface_temp,
+            MAX(water_temp_depth1) AS max_surface_temp,
+            AVG(water_temp_depth1) AS avg_surface_temp,
+            MIN(water_temp_depth2) AS min_mid_temp,
+            MAX(water_temp_depth2) AS max_mid_temp,
+            AVG(water_temp_depth2) AS avg_mid_temp,
+            MIN(water_temp_depth3) AS min_bottom_temp,
+            MAX(water_temp_depth3) AS max_bottom_temp,
+            AVG(water_temp_depth3) AS avg_bottom_temp
         FROM sensor_data
         WHERE DATE(timestamp) = '{today}'
     """)
@@ -106,7 +116,11 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
         f"📈 Daily Summary (Today):\n"
         f"🌡️ Air Temp: Min {stats['min_temp']}°C / Max {stats['max_temp']}°C / Avg {round(stats['avg_temp'],2)}°C\n"
-        f"💧 Humidity: Min {stats['min_humidity']}% / Max {stats['max_humidity']}% / Avg {round(stats['avg_humidity'],2)}%"
+        f"💧 Humidity: Min {stats['min_humidity']}% / Max {stats['max_humidity']}% / Avg {round(stats['avg_humidity'],2)}%\n"
+        f"🌊 Water Level: Min {stats['min_water_level']} cm / Max {stats['max_water_level']} cm / Avg {round(stats['avg_water_level'],2)} cm\n"
+        f"🌡️ Surface Temp: Min {stats['min_surface_temp']}°C / Max {stats['max_surface_temp']}°C / Avg {round(stats['avg_surface_temp'],2)}°C\n"
+        f"🌡️ Mid Temp: Min {stats['min_mid_temp']}°C / Max {stats['max_mid_temp']}°C / Avg {round(stats['avg_mid_temp'],2)}°C\n"
+        f"🌡️ Bottom Temp: Min {stats['min_bottom_temp']}°C / Max {stats['max_bottom_temp']}°C / Avg {round(stats['avg_bottom_temp'],2)}°C"
     )
     await update.message.reply_text(msg)
 
@@ -124,6 +138,23 @@ async def backup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     subprocess.call(f"rm {filename}", shell=True)
 
 # -----------------------------
+# AUTOMATIC BACKUP SENDER
+# -----------------------------
+
+async def send_backup_to_admins(bot: Bot):
+    print("Attempting to send backup to admins...")  # Debug
+    filename = f"/tmp/blimas_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+    import subprocess
+    subprocess.call(f"mysqldump -u {DB_CONFIG['user']} -p{DB_CONFIG['password']} {DB_CONFIG['database']} > {filename}", shell=True)
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_document(chat_id=admin_id, document=open(filename, 'rb'))
+            print(f"Backup sent to {admin_id}")  # Debug
+        except Exception as e:
+            print(f"Failed to send backup to admin {admin_id}: {e}")
+    subprocess.call(f"rm {filename}", shell=True)
+
+# -----------------------------
 # MONITORING FUNCTION
 # -----------------------------
 
@@ -134,15 +165,15 @@ async def check_warnings(bot: Bot):
 
     warnings = []
 
-    if sensor['water_level'] < WATER_LEVEL_THRESHOLD:
-        warnings.append(f"⚠️ Water level low: {sensor['water_level']} cm")
+    if sensor['water_level'] > 150.00:
+        warnings.append(f"⚠️ Water level high: {sensor['water_level']} cm")
 
-    if battery['battery_percentage'] < LOW_BATTERY_THRESHOLD:
+    if battery['battery_percentage'] < 20:
         warnings.append(f"🔋 Low battery: {battery['battery_percentage']}%")
 
     for field in ['air_temperature', 'humidity', 'water_temp_depth1', 'water_temp_depth2', 'water_temp_depth3']:
-        if sensor[field] is None:
-            warnings.append(f"🚨 Sensor failure detected: {field} is NULL")
+        if sensor[field] == 0:
+            warnings.append(f"🚨 Sensor failure detected: {field} is 0")
 
     if warnings:
         text = "🚨 BLIMAS Alert:\n" + "\n".join(warnings)
@@ -150,15 +181,20 @@ async def check_warnings(bot: Bot):
             await bot.send_message(chat_id=admin_id, text=text)
 
 # -----------------------------
-# BACKGROUND JOBS
+# BACKGROUND JOBS (Method One: run_coroutine_threadsafe)
 # -----------------------------
 
-def run_schedule(bot: Bot):
-    async def job():
-        await check_warnings(bot)
+main_loop = asyncio.get_event_loop()
 
-    import asyncio
-    schedule.every(5).minutes.do(lambda: asyncio.create_task(job()))
+def run_schedule(bot: Bot):
+    async def warning_job():
+        await check_warnings(bot)
+    async def backup_job():
+        await send_backup_to_admins(bot)
+
+    # Schedule jobs using run_coroutine_threadsafe
+    schedule.every(5).minutes.do(lambda: asyncio.run_coroutine_threadsafe(warning_job(), main_loop))
+    schedule.every(1440).minutes.do(lambda: asyncio.run_coroutine_threadsafe(backup_job(), main_loop))
 
     while True:
         schedule.run_pending()
@@ -167,10 +203,6 @@ def run_schedule(bot: Bot):
 # -----------------------------
 # MAIN FUNCTION
 # -----------------------------
-
-import asyncio
-
-from telegram.ext import ApplicationBuilder
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
