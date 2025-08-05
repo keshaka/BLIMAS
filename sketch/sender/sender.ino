@@ -74,10 +74,9 @@ int readBatteryVoltage() {
 
 float measureWaterLevel() {
   float waterLevel = 0;
-  int maxTries = 5;
   int attempt = 0;
 
-  while (attempt < maxTries) {
+  while (attempt < 5) {
     // Trigger the sensor
     digitalWrite(TRIG_PIN, LOW);
     delayMicroseconds(2);
