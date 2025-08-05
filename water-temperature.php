@@ -1,108 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Temperature - BLIMAS</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-    <header class="header">
-        <nav class="nav-container">
-            <a href="index.php" class="logo">BLIMAS</a>
-            <ul class="nav-menu">
-                <li><a href="index.php">Dashboard</a></li>
-                <li><a href="temperature.php">Temperature</a></li>
-                <li><a href="humidity.php">Humidity</a></li>
-                <li><a href="water-level.php">Water Level</a></li>
-                <li><a href="water-temperature.php" class="active">Water Temperature</a></li>
-            </ul>
-        </nav>
-    </header>
+<?php $page_title = "BLIMAS - Water Temperature"; ?>
+<?php include 'includes/header.php'; ?>
 
-    <main class="main-content page-enter">
-        <h1 class="page-title">Water Temperature Monitoring</h1>
-        
-        <div class="chart-container">
-            <div class="chart-header">
-                <h3 class="chart-title">Water Temperature by Depth</h3>
-                <div class="time-selector">
-                    <button class="time-btn active" onclick="loadWaterTempChart(this, 6)">6H</button>
-                    <button class="time-btn" onclick="loadWaterTempChart(this, 24)">24H</button>
-                    <button class="time-btn" onclick="loadWaterTempChart(this, 72)">3D</button>
-                    <button class="time-btn" onclick="loadWaterTempChart(this, 168)">7D</button>
+<main class="main-content chart-page">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <!-- Back Button -->
+                <div class="back-button-container" data-aos="fade-right">
+                    <a href="index.php" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+
+                <!-- Page Header -->
+                <div class="page-header text-center" data-aos="fade-up">
+                    <div class="page-icon">
+                        <i class="fas fa-temperature-low"></i>
+                    </div>
+                    <h1 class="display-4 text-warning">Water Temperature</h1>
+                    <p class="lead text-muted">Temperature variations across different depths</p>
+                </div>
+
+                <!-- Controls -->
+                <div class="chart-controls" data-aos="fade-up" data-aos-delay="100">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h3>Time Period:</h3>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="periodSelect" class="form-select form-select-lg">
+                                <option value="day">Today</option>
+                                <option value="week">Last 7 Days</option>
+                                <option value="month">Last 30 Days</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="chart-container" data-aos="zoom-in" data-aos-delay="200">
+                    <canvas id="waterTempChart"></canvas>
+                    <div class="chart-loader" id="chartLoader">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Depth Stats -->
+                <div class="row mt-5" data-aos="fade-up" data-aos-delay="300">
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="depth-card surface">
+                            <div class="depth-header">
+                                <i class="fas fa-water"></i>
+                                <h4>Surface Level</h4>
+                            </div>
+                            <div class="depth-stats">
+                                <div class="stat-item">
+                                    <span class="label">Current:</span>
+                                    <span class="value" id="currentSurface">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Max:</span>
+                                    <span class="value" id="maxSurface">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Min:</span>
+                                    <span class="value" id="minSurface">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Avg:</span>
+                                    <span class="value" id="avgSurface">--°C</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="depth-card middle">
+                            <div class="depth-header">
+                                <i class="fas fa-minus"></i>
+                                <h4>Mid Level</h4>
+                            </div>
+                            <div class="depth-stats">
+                                <div class="stat-item">
+                                    <span class="label">Current:</span>
+                                    <span class="value" id="currentMid">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Max:</span>
+                                    <span class="value" id="maxMid">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Min:</span>
+                                    <span class="value" id="minMid">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Avg:</span>
+                                    <span class="value" id="avgMid">--°C</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="depth-card bottom">
+                            <div class="depth-header">
+                                <i class="fas fa-arrow-down"></i>
+                                <h4>Bottom Level</h4>
+                            </div>
+                            <div class="depth-stats">
+                                <div class="stat-item">
+                                    <span class="label">Current:</span>
+                                    <span class="value" id="currentBottom">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Max:</span>
+                                    <span class="value" id="maxBottom">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Min:</span>
+                                    <span class="value" id="minBottom">--°C</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Avg:</span>
+                                    <span class="value" id="avgBottom">--°C</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div style="height: 400px;">
-                <canvas id="water-temp-chart"></canvas>
-            </div>
         </div>
+    </div>
+</main>
 
-        <div class="water-temp-grid">
-            <div class="depth-card">
-                <div class="depth-label">Surface (Depth 1)</div>
-                <div class="depth-value" id="current-temp-1">--.-</div>
-                <div class="depth-unit">°C</div>
-            </div>
-            <div class="depth-card">
-                <div class="depth-label">Middle (Depth 2)</div>
-                <div class="depth-value" id="current-temp-2">--.-</div>
-                <div class="depth-unit">°C</div>
-            </div>
-            <div class="depth-card">
-                <div class="depth-label">Bottom (Depth 3)</div>
-                <div class="depth-value" id="current-temp-3">--.-</div>
-                <div class="depth-unit">°C</div>
-            </div>
-        </div>
-    </main>
+<script>
+function waitForChart() {
+    if (typeof Chart !== 'undefined') {
+        console.log('Chart.js loaded successfully');
+        const script = document.createElement('script');
+        script.src = 'assets/js/water-temperature.js';
+        script.onload = function() {
+            console.log('Water temperature script loaded');
+        };
+        script.onerror = function() {
+            console.error('Failed to load water temperature script');
+        };
+        document.head.appendChild(script);
+    } else {
+        console.log('Waiting for Chart.js...');
+        setTimeout(waitForChart, 100);
+    }
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="assets/js/main.js"></script>
-    <script>
-        async function loadWaterTempChart(button, hours) {
-            // Update active button
-            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            
-            // Show loading
-            const chartContainer = document.getElementById('water-temp-chart').parentElement;
-            chartContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-            
-            try {
-                const data = await window.chartManager.loadHistoricalData('water_temperature', hours);
-                
-                // Restore canvas
-                chartContainer.innerHTML = '<canvas id="water-temp-chart"></canvas>';
-                
-                if (data.length > 0) {
-                    window.chartManager.createWaterTemperatureChart('water-temp-chart', data);
-                    updateWaterTempDisplay(data);
-                } else {
-                    chartContainer.innerHTML = '<div class="text-center">No data available for the selected time period</div>';
-                }
-            } catch (error) {
-                console.error('Error loading water temperature chart:', error);
-                chartContainer.innerHTML = '<div class="text-center">Error loading chart data</div>';
-            }
-        }
+document.addEventListener('DOMContentLoaded', waitForChart);
+</script>
 
-        function updateWaterTempDisplay(data) {
-            if (data.length === 0) return;
-            
-            const latest = data[data.length - 1];
-            document.getElementById('current-temp-1').textContent = parseFloat(latest.water_temp_depth1).toFixed(1);
-            document.getElementById('current-temp-2').textContent = parseFloat(latest.water_temp_depth2).toFixed(1);
-            document.getElementById('current-temp-3').textContent = parseFloat(latest.water_temp_depth3).toFixed(1);
-        }
-
-        // Load initial chart when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                const activeButton = document.querySelector('.time-btn.active');
-                loadWaterTempChart(activeButton, 6);
-            }, 500);
-        });
-    </script>
-</body>
-</html>
+<?php include 'includes/footer.php'; ?>

@@ -1,341 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLIMAS - Bolgoda Lake Monitoring System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
-</head>
-<body>
-    <header class="header">
-        <nav class="nav-container">
-            <a href="index.php" class="logo">BLIMAS</a>
-            <ul class="nav-menu">
-                <li><a href="index.php" class="active">Dashboard</a></li>
-                <li><a href="temperature.php">Temperature</a></li>
-                <li><a href="humidity.php">Humidity</a></li>
-                <li><a href="water-level.php">Water Level</a></li>
-                <li><a href="water-temperature.php">Water Temperature</a></li>
-            </ul>
-        </nav>
-    </header>
+<?php $page_title = "BLIMAS - Home"; ?>
+<?php include 'includes/header.php'; ?>
 
-    <main class="main-content">
-        <h1 class="page-title">Bolgoda Lake Monitoring System</h1>
-        
-        <div class="dashboard-grid">
-            <!-- Air Temperature Card -->
-            <div class="data-card">
-                <div class="card-header">
-                    <div class="card-icon">🌡️</div>
-                    <div class="card-title">Air Temperature</div>
+<main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <h1 class="display-4 text-primary mb-4">
+                        <i class="fas fa-water me-3"></i>BLIMAS
+                    </h1>
+                    <h2 class="h3 text-secondary mb-4">Bolgoda Lake Information Monitoring and Analysis System</h2>
+                    <p class="lead">Real-time environmental monitoring for sustainable lake management</p>
                 </div>
-                <div class="card-value" id="air-temperature">--.-</div>
-                <div class="card-unit">°C</div>
-                <div class="status-indicator">
-                    <div class="status-dot status-normal" id="temp-status"></div>
-                    <span>Normal Range</span>
-                </div>
-            </div>
-
-            <!-- Humidity Card -->
-            <div class="data-card">
-                <div class="card-header">
-                    <div class="card-icon">💧</div>
-                    <div class="card-title">Humidity</div>
-                </div>
-                <div class="card-value" id="humidity">--.-</div>
-                <div class="card-unit">%</div>
-                <div class="status-indicator">
-                    <div class="status-dot status-normal" id="humidity-status"></div>
-                    <span>Normal Range</span>
-                </div>
-            </div>
-
-            <!-- Water Level Card -->
-            <div class="data-card">
-                <div class="card-header">
-                    <div class="card-icon">🌊</div>
-                    <div class="card-title">Water Level</div>
-                </div>
-                <div class="card-value" id="water-level">--.-</div>
-                <div class="card-unit">m</div>
-                <div class="status-indicator">
-                    <div class="status-dot status-normal" id="water-level-status"></div>
-                    <span>Normal Range</span>
-                </div>
-            </div>
-
-            <!-- Weather Widget -->
-            <div class="weather-widget">
-                <div class="weather-icon" id="weather-icon">🌤️</div>
-                <div class="weather-temp" id="weather-temp">--</div>
-                <div class="weather-desc" id="weather-desc">Loading...</div>
-                <div class="weather-details">
-                    <div class="weather-detail">
-                        <div>Humidity</div>
-                        <div id="weather-humidity">--%</div>
-                    </div>
-                    <div class="weather-detail">
-                        <div>Pressure</div>
-                        <div id="weather-pressure">-- hPa</div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="hero-image">
+                        <div class="floating-card">
+                            <i class="fas fa-chart-line fa-3x text-primary"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Water Temperature Section -->
-        <div class="water-temp-grid">
-            <div class="depth-card">
-                <div class="depth-label">Surface (Depth 1)</div>
-                <div class="depth-value" id="water-temp-1">--.-</div>
-                <div class="depth-unit">°C</div>
+    <!-- Real-time Data Section -->
+    <section class="py-5" id="data-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5" data-aos="fade-up">
+                    <h2 class="display-5 mb-3">Real-time Lake Data</h2>
+                    <p class="lead text-muted">Live updates every 5 minutes</p>
+                    <div class="last-update">
+                        <small class="text-muted">Last updated: <span id="lastUpdate">Loading...</span></small>
+                    </div>
+                </div>
             </div>
-            <div class="depth-card">
-                <div class="depth-label">Middle (Depth 2)</div>
-                <div class="depth-value" id="water-temp-2">--.-</div>
-                <div class="depth-unit">°C</div>
+
+            <!-- Data Cards -->
+            <div class="row g-4" id="dataCards">
+                <!-- Air Temperature Card -->
+                <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="data-card gradient-blue">
+                        <div class="card-icon">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Air Temperature</h3>
+                            <div class="data-value">
+                                <span id="airTemp">--</span>
+                                <small>°C</small>
+                            </div>
+                        </div>
+                        <div class="card-trend" id="airTempTrend"></div>
+                    </div>
+                </div>
+
+                <!-- Humidity Card -->
+                <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="data-card gradient-cyan">
+                        <div class="card-icon">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Humidity</h3>
+                            <div class="data-value">
+                                <span id="humidity">--</span>
+                                <small>%</small>
+                            </div>
+                        </div>
+                        <div class="card-trend" id="humidityTrend"></div>
+                    </div>
+                </div>
+
+                <!-- Water Level Card -->
+                <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="data-card gradient-green">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Water Level</h3>
+                            <div class="data-value">
+                                <span id="waterLevel">--</span>
+                                <small>m</small>
+                            </div>
+                        </div>
+                        <div class="card-trend" id="waterLevelTrend"></div>
+                    </div>
+                </div>
+
+                <!-- Water Temperature Card -->
+                <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="data-card gradient-purple">
+                        <div class="card-icon">
+                            <i class="fas fa-temperature-low"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Water Temperature</h3>
+                            <div class="water-temps">
+                                <div class="temp-depth">
+                                    <small>Surface:</small>
+                                    <span id="waterTemp1">--</span>°C
+                                </div>
+                                <div class="temp-depth">
+                                    <small>Mid:</small>
+                                    <span id="waterTemp2">--</span>°C
+                                </div>
+                                <div class="temp-depth">
+                                    <small>Bottom:</small>
+                                    <span id="waterTemp3">--</span>°C
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="depth-card">
-                <div class="depth-label">Bottom (Depth 3)</div>
-                <div class="depth-value" id="water-temp-3">--.-</div>
-                <div class="depth-unit">°C</div>
+
+            <!-- Quick Links -->
+            <div class="row mt-5">
+                <div class="col-12 text-center" data-aos="fade-up">
+                    <h3 class="mb-4">Detailed Analysis</h3>
+                    <div class="quick-links">
+                        <a href="air-temperature.php" class="btn btn-outline-primary btn-lg me-3 mb-3">
+                            <i class="fas fa-thermometer-half me-2"></i>Air Temperature Trends
+                        </a>
+                        <a href="humidity.php" class="btn btn-outline-info btn-lg me-3 mb-3">
+                            <i class="fas fa-tint me-2"></i>Humidity Analysis
+                        </a>
+                        <a href="water-level.php" class="btn btn-outline-success btn-lg me-3 mb-3">
+                            <i class="fas fa-chart-line me-2"></i>Water Level History
+                        </a>
+                        <a href="water-temperature.php" class="btn btn-outline-warning btn-lg mb-3">
+                            <i class="fas fa-temperature-low me-2"></i>Water Temperature Depths
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    </main>
+    </section>
+</main>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>BLIMAS</h3>
-                <p>Monitoring Bolgoda Lake for environmental protection and sustainable development.</p>
-                <div class="footer-social">
-                    <a href="#" aria-label="Facebook">📘</a>
-                    <a href="#" aria-label="Twitter">🐦</a>
-                    <a href="#" aria-label="Instagram">📷</a>
-                </div>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="temperature.php">Temperature</a></li>
-                    <li><a href="humidity.php">Humidity</a></li>
-                    <li><a href="water-level.php">Water Level</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Contact Info</h4>
-                <div class="contact-item">
-                    <span>📧</span>
-                    <a href="mailto:info@blimas.com">info@blimas.com</a>
-                </div>
-                <div class="contact-item">
-                    <span>📞</span>
-                    <span>+94 11 234 5678</span>
-                </div>
-                <div class="contact-item">
-                    <span>📍</span>
-                    <span>Bolgoda Lake, Sri Lanka</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <div class="footer-bottom-content">
-                <p>&copy; <?php echo date('Y'); ?> BLIMAS. All rights reserved.</p>
-                <div class="footer-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Support</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+<script src="assets/js/dashboard.js"></script>
 
-    <style>
-        .footer {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: #ecf0f1;
-            margin-top: 60px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #3498db, #2ecc71, #f39c12, #e74c3c);
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 50px 20px 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 40px;
-        }
-
-        .footer-section h3 {
-            color: #3498db;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-
-        .footer-section h4 {
-            color: #ecf0f1;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .footer-section p {
-            line-height: 1.6;
-            margin-bottom: 20px;
-            color: #bdc3c7;
-        }
-
-        .footer-social {
-            display: flex;
-            gap: 15px;
-        }
-
-        .footer-social a {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            background: rgba(52, 152, 219, 0.2);
-            border-radius: 50%;
-            text-align: center;
-            line-height: 40px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .footer-social a:hover {
-            background: #3498db;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-        }
-
-        .footer-section ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .footer-section ul li {
-            margin-bottom: 12px;
-        }
-
-        .footer-section ul li a {
-            color: #bdc3c7;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-            padding-left: 20px;
-        }
-
-        .footer-section ul li a::before {
-            content: '▶';
-            position: absolute;
-            left: 0;
-            color: #3498db;
-            font-size: 0.8rem;
-            transition: all 0.3s ease;
-        }
-
-        .footer-section ul li a:hover {
-            color: #3498db;
-            padding-left: 25px;
-        }
-
-        .contact-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            gap: 12px;
-        }
-
-        .contact-item span:first-child {
-            font-size: 1.2rem;
-            width: 20px;
-        }
-
-        .contact-item a {
-            color: #bdc3c7;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .contact-item a:hover {
-            color: #3498db;
-        }
-
-        .footer-bottom {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 25px 20px;
-            border-top: 1px solid rgba(236, 240, 241, 0.1);
-        }
-
-        .footer-bottom-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .footer-bottom p {
-            margin: 0;
-            color: #95a5a6;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 25px;
-        }
-
-        .footer-links a {
-            color: #95a5a6;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .footer-links a:hover {
-            color: #3498db;
-        }
-
-        @media (max-width: 768px) {
-            .footer-content {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .footer-bottom-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .footer-links {
-                justify-content: center;
-            }
-        }
-    </style>
-
-    <script src="assets/js/main.js"></script>
-</body>
-</html>
+<?php include 'includes/footer.php'; ?>

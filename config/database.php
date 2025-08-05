@@ -1,9 +1,9 @@
 <?php
 class Database {
-    private $host = 'localhost';
-    private $db_name = 'blimas_db';
-    private $username = 'root';
-    private $password = '';
+    private $host = "blimas.live";
+    private $db_name = "blimas_db";
+    private $username = "root";
+    private $password = "Qwer3552";
     public $conn;
 
     public function getConnection() {

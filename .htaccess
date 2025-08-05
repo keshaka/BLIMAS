@@ -1,25 +1,22 @@
-# BLIMAS Apache Configuration
+# BLIMAS .htaccess Configuration
+
+# Enable mod_rewrite
 RewriteEngine On
 
-# Force HTTPS (uncomment for production)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-# Pretty URLs
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([^/]+)/?$ $1.php [L,QSA]
-
 # Security Headers
-<IfModule mod_headers.c>
-    Header always set X-Content-Type-Options nosniff
-    Header always set X-Frame-Options DENY
-    Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.openweathermap.org;"
-</IfModule>
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
-# Gzip Compression
+# CORS Headers for API
+<LocationMatch "^/api/">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</LocationMatch>
+
+# Compression
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html
@@ -30,38 +27,42 @@ RewriteRule ^([^/]+)/?$ $1.php [L,QSA]
     AddOutputFilterByType DEFLATE application/rss+xml
     AddOutputFilterByType DEFLATE application/javascript
     AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
 </IfModule>
 
-# Cache Static Files
+# Cache Control
 <IfModule mod_expires.c>
-    ExpiresActive On
+    ExpiresActive on
     ExpiresByType text/css "access plus 1 month"
     ExpiresByType application/javascript "access plus 1 month"
     ExpiresByType image/png "access plus 1 month"
     ExpiresByType image/jpg "access plus 1 month"
     ExpiresByType image/jpeg "access plus 1 month"
     ExpiresByType image/gif "access plus 1 month"
-    ExpiresByType image/ico "access plus 1 month"
-    ExpiresByType image/icon "access plus 1 month"
-    ExpiresByType text/plain "access plus 1 month"
 </IfModule>
 
-# Prevent access to sensitive files
-<Files "*.sql">
+# Error Pages
+ErrorDocument 404 /404.php
+ErrorDocument 403 /403.php
+ErrorDocument 500 /500.php
+
+# Block access to sensitive files
+<Files ~ "^\.">
     Order allow,deny
     Deny from all
 </Files>
 
-<Files "*.log">
+<Files "config/database.php">
     Order allow,deny
     Deny from all
 </Files>
 
-# API CORS headers
-<FilesMatch "\.php$">
-    <IfModule mod_headers.c>
-        Header set Access-Control-Allow-Origin "*"
-        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
-        Header set Access-Control-Allow-Headers "Content-Type, Authorization"
-    </IfModule>
-</FilesMatch>
+<Files "sample_data.php">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Pretty URLs (optional)
+# RewriteRule ^air-temp/?$ air-temperature.php [L]
+# RewriteRule ^water-temp/?$ water-temperature.php [L]
+# RewriteRule ^water-level/?$ water-level.php [L]

@@ -19,15 +19,7 @@ if (!$db) {
     exit;
 }
 
-$type = $_GET['type'] ?? '';
 $period = $_GET['period'] ?? 'day';
-
-// Validate type parameter
-$validTypes = ['air_temperature', 'humidity', 'water_level'];
-if (!in_array($type, $validTypes)) {
-    echo json_encode(['error' => 'Invalid data type']);
-    exit;
-}
 
 $whereClause = '';
 switch($period) {
@@ -45,7 +37,7 @@ switch($period) {
 }
 
 try {
-    $query = "SELECT timestamp, $type FROM sensor_data $whereClause ORDER BY timestamp ASC";
+    $query = "SELECT timestamp, water_temp_depth1, water_temp_depth2, water_temp_depth3 FROM sensor_data $whereClause ORDER BY timestamp ASC";
     $stmt = $db->prepare($query);
     $stmt->execute();
     
@@ -53,7 +45,9 @@ try {
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $data[] = [
             'timestamp' => $row['timestamp'],
-            $type => floatval($row[$type])
+            'water_temp_depth1' => floatval($row['water_temp_depth1']),
+            'water_temp_depth2' => floatval($row['water_temp_depth2']),
+            'water_temp_depth3' => floatval($row['water_temp_depth3'])
         ];
     }
     

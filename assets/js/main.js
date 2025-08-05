@@ -1,387 +1,351 @@
-// BLIMAS Main JavaScript
-class BLIMAS {
-    constructor() {
-        this.init();
+// Main JavaScript file for BLIMAS
+
+// Initialize AOS (Animate On Scroll)
+document.addEventListener('DOMContentLoaded', function() {
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 100
+    });
+});
+
+// Loader functionality
+window.addEventListener('load', function() {
+    const loader = document.getElementById('loader');
+    if (loader) {
+        setTimeout(() => {
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        }, 1000);
     }
+});
 
-    init() {
-        this.loadSensorData();
-        this.loadWeatherData();
-        this.startRealTimeUpdates();
-        this.initializeAnimations();
-    }
-
-    async loadSensorData() {
-        try {
-            const response = await fetch('/api/get_sensor_data.php');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                this.updateSensorDisplay(data.data);
-            } else {
-                console.error('Error loading sensor data:', data.message);
-            }
-        } catch (error) {
-            console.error('Error fetching sensor data:', error);
-        }
-    }
-
-    async loadWeatherData() {
-        try {
-            const response = await fetch('/api/get_weather.php');
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                this.updateWeatherDisplay(data.data);
-            } else {
-                console.error('Error loading weather data:', data.message);
-            }
-        } catch (error) {
-            console.error('Error fetching weather data:', error);
-        }
-    }
-
-    updateSensorDisplay(data) {
-        // Update temperature
-        const tempElement = document.getElementById('air-temperature');
-        if (tempElement) {
-            this.animateValue(tempElement, parseFloat(data.air_temperature));
-        }
-
-        // Update humidity
-        const humidityElement = document.getElementById('humidity');
-        if (humidityElement) {
-            this.animateValue(humidityElement, parseFloat(data.humidity));
-        }
-
-        // Update water level
-        const waterLevelElement = document.getElementById('water-level');
-        if (waterLevelElement) {
-            this.animateValue(waterLevelElement, parseFloat(data.water_level));
-        }
-
-        // Update water temperatures
-        const waterTemp1 = document.getElementById('water-temp-1');
-        const waterTemp2 = document.getElementById('water-temp-2');
-        const waterTemp3 = document.getElementById('water-temp-3');
-        
-        if (waterTemp1) this.animateValue(waterTemp1, parseFloat(data.water_temp_depth1));
-        if (waterTemp2) this.animateValue(waterTemp2, parseFloat(data.water_temp_depth2));
-        if (waterTemp3) this.animateValue(waterTemp3, parseFloat(data.water_temp_depth3));
-
-        // Update status indicators
-        this.updateStatusIndicators(data);
-    }
-
-    updateWeatherDisplay(data) {
-        const weatherIcon = document.getElementById('weather-icon');
-        const weatherTemp = document.getElementById('weather-temp');
-        const weatherDesc = document.getElementById('weather-desc');
-        const weatherHumidity = document.getElementById('weather-humidity');
-        const weatherPressure = document.getElementById('weather-pressure');
-
-        if (weatherIcon) {
-            weatherIcon.innerHTML = this.getWeatherIcon(data.icon);
-        }
-        if (weatherTemp) {
-            this.animateValue(weatherTemp, Math.round(data.temperature));
-        }
-        if (weatherDesc) {
-            weatherDesc.textContent = data.description;
-        }
-        if (weatherHumidity) {
-            weatherHumidity.textContent = data.humidity + '%';
-        }
-        if (weatherPressure) {
-            weatherPressure.textContent = data.pressure + ' hPa';
-        }
-    }
-
-    getWeatherIcon(iconCode) {
-        const iconMap = {
-            '01d': '☀️', '01n': '🌙',
-            '02d': '⛅', '02n': '☁️',
-            '03d': '☁️', '03n': '☁️',
-            '04d': '☁️', '04n': '☁️',
-            '09d': '🌧️', '09n': '🌧️',
-            '10d': '🌦️', '10n': '🌧️',
-            '11d': '⛈️', '11n': '⛈️',
-            '13d': '❄️', '13n': '❄️',
-            '50d': '🌫️', '50n': '🌫️'
-        };
-        return iconMap[iconCode] || '🌤️';
-    }
-
-    animateValue(element, targetValue) {
-        const startValue = parseFloat(element.textContent) || 0;
-        const duration = 1000;
-        const startTime = performance.now();
-
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            const currentValue = startValue + (targetValue - startValue) * this.easeOutCubic(progress);
-            element.textContent = currentValue.toFixed(1);
-            
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-        
-        requestAnimationFrame(animate);
-    }
-
-    easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-    }
-
-    updateStatusIndicators(data) {
-        // Temperature status
-        const tempStatus = this.getTemperatureStatus(data.air_temperature);
-        this.updateStatusDot('temp-status', tempStatus);
-
-        // Humidity status
-        const humidityStatus = this.getHumidityStatus(data.humidity);
-        this.updateStatusDot('humidity-status', humidityStatus);
-
-        // Water level status
-        const waterLevelStatus = this.getWaterLevelStatus(data.water_level);
-        this.updateStatusDot('water-level-status', waterLevelStatus);
-    }
-
-    getTemperatureStatus(temp) {
-        if (temp < 20 || temp > 35) return 'critical';
-        if (temp < 25 || temp > 32) return 'warning';
-        return 'normal';
-    }
-
-    getHumidityStatus(humidity) {
-        if (humidity < 30 || humidity > 90) return 'critical';
-        if (humidity < 40 || humidity > 80) return 'warning';
-        return 'normal';
-    }
-
-    getWaterLevelStatus(level) {
-        if (level < 1.5 || level > 3.5) return 'critical';
-        if (level < 2.0 || level > 3.0) return 'warning';
-        return 'normal';
-    }
-
-    updateStatusDot(elementId, status) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.className = `status-dot status-${status}`;
-        }
-    }
-
-    startRealTimeUpdates() {
-        // Update every 30 seconds
-        setInterval(() => {
-            this.loadSensorData();
-        }, 30000);
-
-        // Update weather every 10 minutes
-        setInterval(() => {
-            this.loadWeatherData();
-        }, 600000);
-    }
-
-    initializeAnimations() {
-        // Add entrance animations to cards
-        const cards = document.querySelectorAll('.data-card, .weather-widget');
-        cards.forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
-        });
-
-        // Add hover effects
-        this.addHoverEffects();
-    }
-
-    addHoverEffects() {
-        const cards = document.querySelectorAll('.data-card');
-        cards.forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-10px) scale(1.02)';
+// Smooth scrolling for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
             });
-            
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-    }
-}
-
-// Chart utilities
-class ChartManager {
-    constructor() {
-        this.charts = {};
-    }
-
-    async loadHistoricalData(type, hours = 24) {
-        try {
-            const response = await fetch(`/api/get_historical_data.php?type=${type}&hours=${hours}`);
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                return data.data;
-            } else {
-                console.error('Error loading historical data:', data.message);
-                return [];
-            }
-        } catch (error) {
-            console.error('Error fetching historical data:', error);
-            return [];
         }
+    });
+});
+
+// Navbar scroll effect
+window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
     }
-
-    createLineChart(canvasId, data, label, color) {
-        const ctx = document.getElementById(canvasId);
-        if (!ctx) return;
-
-        // Destroy existing chart if it exists
-        if (this.charts[canvasId]) {
-            this.charts[canvasId].destroy();
-        }
-
-        const chartData = {
-            labels: data.map(item => new Date(item.timestamp).toLocaleTimeString()),
-            datasets: [{
-                label: label,
-                data: data.map(item => item.value),
-                borderColor: color,
-                backgroundColor: color + '20',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 3,
-                pointHoverRadius: 6
-            }]
-        };
-
-        this.charts[canvasId] = new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        grid: {
-                            color: 'rgba(0,0,0,0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.1)'
-                        }
-                    }
-                },
-                elements: {
-                    point: {
-                        hoverBackgroundColor: color
-                    }
-                }
-            }
-        });
-    }
-
-    createWaterTemperatureChart(canvasId, data) {
-        const ctx = document.getElementById(canvasId);
-        if (!ctx) return;
-
-        if (this.charts[canvasId]) {
-            this.charts[canvasId].destroy();
-        }
-
-        const chartData = {
-            labels: data.map(item => new Date(item.timestamp).toLocaleTimeString()),
-            datasets: [
-                {
-                    label: 'Depth 1 (Surface)',
-                    data: data.map(item => item.water_temp_depth1),
-                    borderColor: '#FF6384',
-                    backgroundColor: '#FF638420',
-                    fill: false,
-                    tension: 0.4
-                },
-                {
-                    label: 'Depth 2 (Middle)',
-                    data: data.map(item => item.water_temp_depth2),
-                    borderColor: '#36A2EB',
-                    backgroundColor: '#36A2EB20',
-                    fill: false,
-                    tension: 0.4
-                },
-                {
-                    label: 'Depth 3 (Bottom)',
-                    data: data.map(item => item.water_temp_depth3),
-                    borderColor: '#4BC0C0',
-                    backgroundColor: '#4BC0C020',
-                    fill: false,
-                    tension: 0.4
-                }
-            ]
-        };
-
-        this.charts[canvasId] = new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        grid: {
-                            color: 'rgba(0,0,0,0.1)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.1)'
-                        }
-                    }
-                }
-            }
-        });
-    }
-}
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.blimas = new BLIMAS();
-    window.chartManager = new ChartManager();
 });
 
 // Utility functions
-function showLoading(elementId) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-    }
-}
+const Utils = {
+    // Format timestamp to readable format
+    formatTimestamp: function(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
 
-function hideLoading(elementId) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.style.display = 'block';
-    }
-}
+    // Format number with proper decimals
+    formatNumber: function(num, decimals = 1) {
+        if (num === null || num === undefined || isNaN(num)) {
+            return '--';
+        }
+        return Number(num).toFixed(decimals);
+    },
 
-function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
-}
+    // Show loading state
+    showLoading: function(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.add('loading');
+        }
+    },
+
+    // Hide loading state
+    hideLoading: function(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.remove('loading');
+        }
+    },
+
+    // Show/hide chart loader
+    toggleChartLoader: function(show = true) {
+        const loader = document.getElementById('chartLoader');
+        if (loader) {
+            loader.style.display = show ? 'flex' : 'none';
+        }
+    },
+
+    // API call wrapper with better error handling
+    apiCall: async function(url, options = {}) {
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                ...options
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('API call failed:', error);
+            throw error;
+        }
+    },
+
+    // Show error message with new styling
+    showError: function(message, containerId = 'main') {
+        const container = document.getElementById(containerId) || document.body;
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show';
+        alert.style.position = 'fixed';
+        alert.style.top = '100px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '10000';
+        alert.style.maxWidth = '400px';
+        alert.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Error:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
+    },
+
+    // Show success message with new styling
+    showSuccess: function(message, containerId = 'main') {
+        const container = document.getElementById(containerId) || document.body;
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show';
+        alert.style.position = 'fixed';
+        alert.style.top = '100px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '10000';
+        alert.style.maxWidth = '400px';
+        alert.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+};
+
+// Chart configuration defaults with new color scheme
+const ChartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            display: true,
+            position: 'top',
+            labels: {
+                usePointStyle: true,
+                padding: 20,
+                font: {
+                    size: 12,
+                    weight: 'bold'
+                },
+                color: '#101820'
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(16, 24, 32, 0.95)',
+            titleColor: '#fee715',
+            bodyColor: '#ffffff',
+            borderColor: '#fee715',
+            borderWidth: 2,
+            cornerRadius: 8,
+            displayColors: true,
+            titleFont: {
+                size: 14,
+                weight: 'bold'
+            },
+            bodyFont: {
+                size: 12
+            },
+            callbacks: {
+                title: function(context) {
+                    const date = new Date(context[0].label);
+                    return date.toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            }
+        }
+    },
+    scales: {
+        x: {
+            type: 'time',
+            time: {
+                displayFormats: {
+                    hour: 'HH:mm',
+                    day: 'MM/DD',
+                    week: 'MM/DD',
+                    month: 'MM/YY'
+                }
+            },
+            grid: {
+                display: true,
+                color: 'rgba(16, 24, 32, 0.1)'
+            },
+            ticks: {
+                font: {
+                    size: 11
+                },
+                color: '#101820'
+            },
+            title: {
+                color: '#101820',
+                font: {
+                    weight: 'bold'
+                }
+            }
+        },
+        y: {
+            beginAtZero: false,
+            grid: {
+                display: true,
+                color: 'rgba(16, 24, 32, 0.1)'
+            },
+            ticks: {
+                font: {
+                    size: 11
+                },
+                color: '#101820'
+            },
+            title: {
+                color: '#101820',
+                font: {
+                    weight: 'bold'
+                }
+            }
+        }
+    },
+    elements: {
+        point: {
+            radius: 4,
+            hoverRadius: 8,
+            borderWidth: 2
+        },
+        line: {
+            tension: 0.4,
+            borderWidth: 3
+        }
+    },
+    interaction: {
+        intersect: false,
+        mode: 'index'
+    }
+};
+
+// Updated color palette for charts with high contrast
+const ChartColors = {
+    primary: '#101820',
+    secondary: '#fee715',
+    success: '#10b981',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#3b82f6',
+    surface: '#3b82f6',
+    mid: '#f59e0b',
+    bottom: '#ef4444',
+    // Additional colors for better contrast
+    darkBlue: '#1e40af',
+    brightGreen: '#22c55e',
+    brightOrange: '#ff8c00',
+    brightRed: '#dc2626',
+    brightPurple: '#9333ea'
+};
+
+// Export for use in other files
+window.Utils = Utils;
+window.ChartDefaults = ChartDefaults;
+window.ChartColors = ChartColors;
+
+// Add custom styles for better visibility
+const customStyles = `
+    .chart-container canvas {
+        border: 2px solid #fee715 !important;
+        border-radius: 10px !important;
+    }
+    
+    .navbar.scrolled {
+        background: rgba(16, 24, 32, 0.98) !important;
+        box-shadow: 0 2px 20px rgba(254, 231, 21, 0.3) !important;
+    }
+    
+    .data-card:hover {
+        box-shadow: 0 20px 40px rgba(254, 231, 21, 0.2) !important;
+    }
+    
+    .floating-card {
+        box-shadow: 0 10px 30px rgba(254, 231, 21, 0.3) !important;
+    }
+`;
+
+// Inject custom styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = customStyles;
+document.head.appendChild(styleSheet);
+
+// Improve visibility on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add focus styles for better accessibility
+    const focusStyles = `
+        *:focus {
+            outline: 2px solid #fee715 !important;
+            outline-offset: 2px !important;
+        }
+        
+        .btn:focus {
+            box-shadow: 0 0 0 0.2rem rgba(254, 231, 21, 0.5) !important;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #fee715 !important;
+            box-shadow: 0 0 0 0.2rem rgba(254, 231, 21, 0.25) !important;
+        }
+    `;
+    
+    const accessibilityStyles = document.createElement('style');
+    accessibilityStyles.textContent = focusStyles;
+    document.head.appendChild(accessibilityStyles);
+});

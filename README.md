@@ -1,206 +1,228 @@
-# BLIMAS - Bolgoda Lake Monitoring System
+# BLIMAS - Bolgoda Lake Information Monitoring and Analysis System
 
-A comprehensive web-based monitoring system for tracking environmental parameters of Bolgoda Lake including air temperature, humidity, water level, and water temperature at multiple depths.
+A comprehensive PHP-based environmental monitoring system for real-time lake data visualization and analysis.
 
 ## Features
 
-- **Real-time Dashboard**: Live monitoring of all sensor data
-- **Weather Integration**: Current weather conditions for Katubedda, Sri Lanka
-- **Historical Data Visualization**: Interactive charts with multiple time ranges
-- **Multi-depth Water Temperature**: Monitoring at 3 different water depths
-- **Responsive Design**: Mobile-friendly interface with smooth animations
-- **Real-time Updates**: Automatic data refresh every 30 seconds
-
-## Technical Stack
-
-- **Backend**: PHP 7.4+
-- **Database**: MySQL 5.7+
-- **Frontend**: HTML5, CSS3, JavaScript ES6
-- **Charts**: Chart.js
-- **Weather API**: OpenWeatherMap
+- **Real-time Dashboard**: Live sensor data with auto-refresh every 5 minutes
+- **Interactive Charts**: Historical data visualization using Chart.js
+- **Responsive Design**: Mobile-friendly interface with Bootstrap 5
+- **Beautiful Animations**: Smooth transitions using AOS and custom CSS
+- **RESTful API**: Clean API endpoints for data retrieval
+- **Multiple Time Periods**: Day, week, and month data filtering
 
 ## Installation
 
 ### Prerequisites
-
-- Ubuntu VPS with Apache/Nginx
+- Web server (Apache/Nginx)
 - PHP 7.4 or higher
 - MySQL 5.7 or higher
-- cURL extension enabled
+- Modern web browser
 
-### Setup Instructions
+### Setup Steps
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/keshaka/BLIMAS.git
-cd BLIMAS
-```
+1. **Clone/Download the project**
+   ```bash
+   git clone <repository-url>
+   # Or download and extract the ZIP file
+   ```
 
 2. **Database Setup**
-```bash
-mysql -u root -p < database/schema.sql
-```
+   ```sql
+   -- Create the database
+   CREATE DATABASE IF NOT EXISTS blimas_db;
+   
+   -- Use the database
+   USE blimas_db;
+   
+   -- Create the sensor_data table
+   CREATE TABLE IF NOT EXISTS sensor_data (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       air_temperature DECIMAL(5,2),
+       humidity DECIMAL(5,2),
+       water_level DECIMAL(8,2),
+       water_temp_depth1 DECIMAL(5,2),
+       water_temp_depth2 DECIMAL(5,2),
+       water_temp_depth3 DECIMAL(5,2),
+       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+   );
+   ```
 
 3. **Configure Database Connection**
-Edit `config/database.php` and update your database credentials:
-```php
-private $host = 'localhost';
-private $db_name = 'blimas_db';
-private $username = 'your_username';
-private $password = 'your_password';
+   Edit `config/database.php`:
+   ```php
+   private $host = "localhost";
+   private $db_name = "blimas_db";
+   private $username = "your_username";
+   private $password = "your_password";
+   ```
+
+4. **Set Permissions**
+   ```bash
+   chmod 755 api/
+   chmod 644 config/database.php
+   ```
+
+5. **Insert Sample Data (Optional)**
+   ```bash
+   php sample_data.php
+   ```
+
+## Project Structure
+
 ```
-
-4. **Weather API Setup**
-- Get a free API key from [OpenWeatherMap](https://openweathermap.org/api)
-- Edit `config/weather.php` and add your API key:
-```php
-private $api_key = 'YOUR_OPENWEATHER_API_KEY';
-```
-
-5. **Web Server Configuration**
-
-**For Apache:**
-```apache
-<VirtualHost *:80>
-    ServerName your-domain.com
-    DocumentRoot /var/www/html/BLIMAS
-    
-    <Directory /var/www/html/BLIMAS>
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-```
-
-**For Nginx:**
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    root /var/www/html/BLIMAS;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-}
-```
-
-6. **Set Permissions**
-```bash
-sudo chown -R www-data:www-data /var/www/html/BLIMAS
-sudo chmod -R 755 /var/www/html/BLIMAS
-```
-
-7. **Restart Web Server**
-```bash
-# For Apache
-sudo systemctl restart apache2
-
-# For Nginx
-sudo systemctl restart nginx
+BLIMAS/
+├── config/
+│   └── database.php          # Database configuration
+├── includes/
+│   ├── header.php           # Common header
+│   └── footer.php           # Common footer
+├── api/
+│   ├── get_latest_data.php  # Latest sensor data
+│   ├── get_historical_data.php # Historical data
+│   └── get_water_temp_data.php # Water temperature data
+├── assets/
+│   ├── css/
+│   │   └── style.css        # Main stylesheet
+│   └── js/
+│       ├── main.js          # Core JavaScript
+│       ├── dashboard.js     # Dashboard functionality
+│       ├── air-temperature.js
+│       ├── humidity.js
+│       ├── water-level.js
+│       └── water-temperature.js
+├── index.php                # Homepage/Dashboard
+├── air-temperature.php      # Air temperature page
+├── humidity.php             # Humidity page
+├── water-level.php          # Water level page
+├── water-temperature.php    # Water temperature page
+├── sample_data.php          # Sample data generator
+├── .htaccess               # Apache configuration
+├── 404.php                 # Error page
+└── README.md               # This file
 ```
 
 ## API Endpoints
 
-- `GET /api/get_sensor_data.php` - Latest sensor readings
-- `GET /api/get_historical_data.php?type={type}&hours={hours}` - Historical data
-- `GET /api/get_weather.php` - Current weather data
-
-## Data Input
-
-To add sensor data, insert records into the `sensor_data` table:
-
-```sql
-INSERT INTO sensor_data (air_temperature, humidity, water_level, water_temp_depth1, water_temp_depth2, water_temp_depth3) 
-VALUES (28.5, 75.2, 2.45, 26.8, 25.9, 24.1);
+### Get Latest Data
 ```
+GET /api/get_latest_data.php
+```
+Returns the most recent sensor readings.
+
+### Get Historical Data
+```
+GET /api/get_historical_data.php?type={sensor_type}&period={time_period}
+```
+Parameters:
+- `type`: air_temperature, humidity, water_level
+- `period`: day, week, month
+
+### Get Water Temperature Data
+```
+GET /api/get_water_temp_data.php?period={time_period}
+```
+Returns temperature data for all three depths.
 
 ## Customization
 
-### Adding New Sensors
+### Colors and Styling
+Edit `assets/css/style.css` to modify:
+- Color variables in `:root`
+- Card gradients
+- Animation effects
 
-1. Add columns to the `sensor_data` table
-2. Update API endpoints in `api/` directory
-3. Modify the dashboard display in `index.php`
-4. Add corresponding chart pages
-
-### Styling
-
-- Main styles: `assets/css/style.css`
-- Responsive breakpoints already configured
-- CSS animations and transitions included
-
-## Monitoring and Maintenance
-
-### Database Maintenance
-
-```sql
--- Clean old data (older than 30 days)
-DELETE FROM sensor_data WHERE timestamp < DATE_SUB(NOW(), INTERVAL 30 DAY);
-
--- Optimize table
-OPTIMIZE TABLE sensor_data;
+### Data Refresh Rate
+Modify the refresh interval in `assets/js/dashboard.js`:
+```javascript
+this.updateInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
 ```
 
-### Log Monitoring
+### Chart Configuration
+Customize charts in respective JavaScript files:
+- `ChartDefaults` object in `main.js`
+- Individual chart configurations
 
-Check web server logs for any errors:
-```bash
-# Apache
-sudo tail -f /var/log/apache2/error.log
+## Browser Support
 
-# Nginx
-sudo tail -f /var/log/nginx/error.log
-```
+- Chrome 60+
+- Firefox 55+
+- Safari 12+
+- Edge 79+
 
-## Security Considerations
+## Dependencies
 
-1. **Database Security**
-   - Use strong passwords
-   - Limit database user permissions
-   - Regular backups
+### Frontend
+- Bootstrap 5.3.0
+- Chart.js (latest)
+- Font Awesome 6.4.0
+- AOS (Animate On Scroll) 2.3.1
 
-2. **API Security**
-   - Implement rate limiting
-   - Add authentication for data insertion
-   - Validate all input data
+### Backend
+- PHP 7.4+
+- PDO MySQL Extension
 
-3. **Web Security**
-   - Keep PHP updated
-   - Use HTTPS in production
-   - Regular security updates
+## Security Features
+
+- SQL injection prevention with prepared statements
+- XSS protection headers
+- CSRF protection ready
+- File access restrictions
+- Input validation and sanitization
+
+## Performance Optimization
+
+- Gzip compression enabled
+- Browser caching configured
+- Minified CSS/JS (production ready)
+- Efficient database queries
+- Lazy loading animations
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Charts not loading**
-   - Check browser console for errors
-   - Verify Chart.js CDN is accessible
-   - Check API endpoints are returning data
+1. **Database Connection Error**
+   - Check database credentials in `config/database.php`
+   - Ensure MySQL service is running
 
-2. **Weather data not showing**
-   - Verify OpenWeatherMap API key
-   - Check network connectivity
-   - Review API response in browser dev tools
+2. **Charts Not Loading**
+   - Check browser console for JavaScript errors
+   - Verify API endpoints are accessible
 
-3. **Database connection errors**
-   - Verify database credentials
-   - Check MySQL service status
-   - Review PHP error logs
+3. **Data Not Updating**
+   - Check if sample data exists in database
+   - Verify API responses in browser DevTools
+
+4. **Styling Issues**
+   - Clear browser cache
+   - Check if CSS files are loading properly
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support and questions:
+- Check the documentation
+- Review the code comments
+- Test with sample data first
+
+## Changelog
+
+### Version 1.0.0 (2024-08-03)
+- Initial release
+- Real-time dashboard
+- Historical data charts
+- Responsive design
+- API endpoints
+- Sample data generator

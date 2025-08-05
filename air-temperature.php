@@ -1,4 +1,4 @@
-<?php $page_title = "BLIMAS - Humidity"; ?>
+<?php $page_title = "BLIMAS - Air Temperature"; ?>
 <?php include 'includes/header.php'; ?>
 
 <main class="main-content chart-page">
@@ -15,10 +15,10 @@
                 <!-- Page Header -->
                 <div class="page-header text-center" data-aos="fade-up">
                     <div class="page-icon">
-                        <i class="fas fa-tint"></i>
+                        <i class="fas fa-thermometer-half"></i>
                     </div>
-                    <h1 class="display-4 text-info">Humidity</h1>
-                    <p class="lead text-muted">Atmospheric humidity levels and patterns</p>
+                    <h1 class="display-4 text-primary">Air Temperature</h1>
+                    <p class="lead text-muted">Historical air temperature trends and analysis</p>
                 </div>
 
                 <!-- Controls -->
@@ -39,9 +39,9 @@
 
                 <!-- Chart Container -->
                 <div class="chart-container" data-aos="zoom-in" data-aos-delay="200">
-                    <canvas id="humidityChart"></canvas>
+                    <canvas id="temperatureChart"></canvas>
                     <div class="chart-loader" id="chartLoader">
-                        <div class="spinner-border text-info" role="status">
+                        <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
@@ -51,34 +51,34 @@
                 <div class="row mt-5" data-aos="fade-up" data-aos-delay="300">
                     <div class="col-lg-3 col-md-6 mb-4">
                         <div class="stat-card">
-                            <div class="stat-icon text-info">
-                                <i class="fas fa-tint"></i>
+                            <div class="stat-icon text-primary">
+                                <i class="fas fa-thermometer-full"></i>
                             </div>
                             <div class="stat-content">
                                 <h4>Current</h4>
-                                <span class="stat-value" id="currentHumidity">--%</span>
+                                <span class="stat-value" id="currentTemp">--°C</span>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-4">
                         <div class="stat-card">
-                            <div class="stat-icon text-primary">
+                            <div class="stat-icon text-danger">
                                 <i class="fas fa-arrow-up"></i>
                             </div>
                             <div class="stat-content">
                                 <h4>Maximum</h4>
-                                <span class="stat-value" id="maxHumidity">--%</span>
+                                <span class="stat-value" id="maxTemp">--°C</span>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-4">
                         <div class="stat-card">
-                            <div class="stat-icon text-warning">
+                            <div class="stat-icon text-info">
                                 <i class="fas fa-arrow-down"></i>
                             </div>
                             <div class="stat-content">
                                 <h4>Minimum</h4>
-                                <span class="stat-value" id="minHumidity">--%</span>
+                                <span class="stat-value" id="minTemp">--°C</span>
                             </div>
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                             </div>
                             <div class="stat-content">
                                 <h4>Average</h4>
-                                <span class="stat-value" id="avgHumidity">--%</span>
+                                <span class="stat-value" id="avgTemp">--°C</span>
                             </div>
                         </div>
                     </div>
@@ -99,17 +99,20 @@
     </div>
 </main>
 
+<!-- Load Chart.js specific script -->
 <script>
+// Wait for Chart.js to load before initializing
 function waitForChart() {
     if (typeof Chart !== 'undefined') {
         console.log('Chart.js loaded successfully');
+        // Load the air temperature chart script
         const script = document.createElement('script');
-        script.src = 'assets/js/humidity.js';
+        script.src = 'assets/js/air-temperature.js';
         script.onload = function() {
-            console.log('Humidity script loaded');
+            console.log('Air temperature script loaded');
         };
         script.onerror = function() {
-            console.error('Failed to load humidity script');
+            console.error('Failed to load air temperature script');
         };
         document.head.appendChild(script);
     } else {
@@ -118,6 +121,7 @@ function waitForChart() {
     }
 }
 
+// Start waiting for Chart.js after DOM is loaded
 document.addEventListener('DOMContentLoaded', waitForChart);
 </script>
 
