@@ -24,7 +24,7 @@ char username[64] = "konarakmrn.23";
 char user_password[64] = "Rn87ysh#16";
 
 // Remote server
-char serverURL[128] = "http://blimas.unilodge.live/upload.php";
+char serverURL[128] = "https://blimas.site/upload.php";
 
 WiFiClientSecure client;
 WebServer server(80);
