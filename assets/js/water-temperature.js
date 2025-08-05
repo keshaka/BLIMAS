@@ -114,7 +114,7 @@ class WaterTemperatureChart {
                         fill: false,
                         tension: 0.4,
                         pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: 'transparent',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6
@@ -127,7 +127,7 @@ class WaterTemperatureChart {
                         fill: false,
                         tension: 0.4,
                         pointBackgroundColor: '#f59e0b',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: 'transparent',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6
@@ -140,7 +140,7 @@ class WaterTemperatureChart {
                         fill: false,
                         tension: 0.4,
                         pointBackgroundColor: '#ef4444',
-                        pointBorderColor: '#ffffff',
+                        pointBorderColor: 'transparent',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6

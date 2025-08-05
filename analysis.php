@@ -1,7 +1,7 @@
 <?php $page_title = "BLIMAS - AI Environmental Analysis"; ?>
 <?php include 'includes/header.php'; ?>
 
-<main class="main-content chart-page">
+<main class="main-content chart-page" style="color: #797706;">
     <div class="container">
         <div class="row">
             <div class="col-12">
@@ -18,13 +18,13 @@
                         <i class="fas fa-brain"></i>
                     </div>
                     <h1 class="display-4">Environmental Analysis System</h1>
-                    <p class="lead text-muted">Intelligent insights using real sensor data</p>
+                    <p class="lead text-muted">Intelligent insights using sensor data</p>
                     
                     <!-- Network Status Indicator -->
                     <div class="network-status" id="networkStatus">
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Status:</strong> Using enhanced data-driven analysis with your actual sensor readings
+                            <strong>Status:</strong> Using enhanced data-driven analysis with sensor readings
                         </div>
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <h4 class="mt-3">Analyzing Environmental Data...</h4>
-                        <p class="text-muted">Processing your Bolgoda Lake sensor readings</p>
+                        <p class="text-muted">Processing Bolgoda Lake sensor readings</p>
                         <div class="progress mt-3">
                             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
                         </div>
@@ -106,12 +106,12 @@
                         <div class="col-lg-6 mb-4">
                             <div class="feature-card">
                                 <h4><i class="fas fa-database me-2 text-primary"></i>Data-Driven Analysis</h4>
-                                <p>Our system analyzes your <strong>actual sensor readings</strong> from Bolgoda Lake to provide:</p>
+                                <p>Our system analyzes <strong>sensor readings</strong> from Bolgoda Lake to provide:</p>
                                 <ul>
                                     <li>Real environmental condition assessment</li>
-                                    <li>Trend analysis based on your data</li>
+                                    <li>Trend analysis based on sensor data</li>
                                     <li>Customized recommendations</li>
-                                    <li>Alert identification from actual readings</li>
+                                    <li>Alert identification from sensor readings</li>
                                 </ul>
                             </div>
                         </div>
