@@ -13,13 +13,13 @@ import asyncio
 # CONFIGURATION
 # -----------------------------
 
-BOT_TOKEN = '5602100686:AAHHQIMJB6kmmEP2AMC21MGPelC8tI6fjBY'  # Your bot token here
-ADMIN_IDS = [1066891806]  # Replace with your Telegram user ID(s)
+BOT_TOKEN = ''
+ADMIN_IDS = []
 
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Qwer3552',
+    'password': '',
     'database': 'blimas_db'
 }
 
@@ -181,6 +181,56 @@ async def check_warnings(bot: Bot):
             await bot.send_message(chat_id=admin_id, text=text)
 
 # -----------------------------
+# CHECK NEW DATA FUNCTION
+# -----------------------------
+
+last_known_timestamp = None
+
+async def check_new_data(bot: Bot):
+    global last_known_timestamp
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute("SELECT timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 1")
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        latest_timestamp = result[0]
+        if last_known_timestamp is None:
+            last_known_timestamp = latest_timestamp
+        elif latest_timestamp == last_known_timestamp:
+            # No new data added, send warning
+            for admin_id in ADMIN_IDS:
+                await bot.send_message(chat_id=admin_id, text=f"⚠️ No new sensor data detected since {latest_timestamp}. Please check the system!")
+        else:
+            # New data was added, update last_known_timestamp, do nothing
+            last_known_timestamp = latest_timestamp
+    else:
+        print("No data in sensor_data table.")
+        for admin_id in ADMIN_IDS:
+            await bot.send_message(chat_id=admin_id, text="🚨 Missing Latest sensor data. Please check the database connection or sensor data insertion process.")
+
+# -----------------------------
+# CHECK WATER LEVEL CHANGE FUNCTION
+# -----------------------------
+
+async def check_water_level_change(bot: Bot):
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT water_level, timestamp FROM sensor_data ORDER BY timestamp DESC LIMIT 2")
+    results = cursor.fetchall()
+    conn.close()
+    if len(results) == 2:
+        latest = results[0]
+        previous = results[1]
+        diff = abs(latest['water_level'] - previous['water_level'])
+        if diff > 10:
+            for admin_id in ADMIN_IDS:
+                await bot.send_message(
+                    chat_id=admin_id,
+                    text=f"⚠️ Sudden water level change detected!\nPrevious: {previous['water_level']} cm at {previous['timestamp']}\nLatest: {latest['water_level']} cm at {latest['timestamp']}\nDifference: {diff} cm"
+                )
+
+# -----------------------------
 # BACKGROUND JOBS (Method One: run_coroutine_threadsafe)
 # -----------------------------
 
@@ -191,10 +241,15 @@ def run_schedule(bot: Bot):
         await check_warnings(bot)
     async def backup_job():
         await send_backup_to_admins(bot)
+    async def new_data_job():
+        await check_new_data(bot)
+    async def water_level_change_job():
+        await check_water_level_change(bot)
 
-    # Schedule jobs using run_coroutine_threadsafe
     schedule.every(5).minutes.do(lambda: asyncio.run_coroutine_threadsafe(warning_job(), main_loop))
     schedule.every(1440).minutes.do(lambda: asyncio.run_coroutine_threadsafe(backup_job(), main_loop))
+    schedule.every(6).minutes.do(lambda: asyncio.run_coroutine_threadsafe(new_data_job(), main_loop))
+    schedule.every(6).minutes.do(lambda: asyncio.run_coroutine_threadsafe(water_level_change_job(), main_loop))
 
     while True:
         schedule.run_pending()
@@ -215,7 +270,6 @@ def main():
     # Start background monitoring thread
     threading.Thread(target=run_schedule, args=(app.bot,), daemon=True).start()
 
-    # This will run the bot in polling mode and block the thread
     app.run_polling()
 
 if __name__ == '__main__':
