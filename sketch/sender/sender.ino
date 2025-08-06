@@ -34,7 +34,6 @@ SSD1306Wire mdisplay(0x3c, 500000, SDA_OLED, SCL_OLED, GEOMETRY_128_64, RST_OLED
 
 // LoRa Variables
 char txpacket[100];
-char rxpacket[100];
 static RadioEvents_t RadioEvents;
 
 int voltageToPercent(float voltage) {
