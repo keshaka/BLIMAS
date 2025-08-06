@@ -80,6 +80,7 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
 
   if (httpResponseCode > 0) {
     Serial.printf("Login response code: %d\n", httpResponseCode);
+    digitalWrite(CYD_LED_BLUE, HIGH);
   } else {
     Serial.printf("Login failed: %s\n", https.errorToString(httpResponseCode).c_str());
     delay(10000);
@@ -87,6 +88,7 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
       loginToCaptivePortal(username, user_password, login_url);
     } else {
       Serial.println("Already authenticated!");
+      digitalWrite(CYD_LED_BLUE, HIGH);
     }
   }
   https.end();
@@ -101,6 +103,7 @@ bool isCaptivePortal() {
 }
 
 void connectToWiFi() {
+  digitalWrite(CYD_LED_GREEN, LOW);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
@@ -108,7 +111,9 @@ void connectToWiFi() {
     Serial.print(".");
   }
   Serial.println("\nConnected to WiFi!");
+  digitalWrite(CYD_LED_GREEN, HIGH);
   if (isCaptivePortal()) {
+      digitalWrite(CYD_LED_BLUE, LOW);
       loginToCaptivePortal(username, user_password, login_url);
     } else {
       Serial.println("Already authenticated!");
@@ -192,6 +197,7 @@ void createSquare(int x, int y, int width, int height, int r, int g, int b) {
   lv_obj_align(square, LV_ALIGN_TOP_LEFT, x, y);
 }
 
+/*
 // Button callbacks
 int btn1_count = 0;
 static void event_handler_btn1(lv_event_t * e) {
@@ -245,10 +251,11 @@ void button3() {
   lv_obj_center(btn_label);
 }
 
+*/
 
 void fetchData() {
   HTTPClient http;
-  http.begin("https://blimas.site/cyd.php"); // 🔁 Replace with actual URL
+  http.begin("https://blimas.site/cyd.php"); // 
   int httpCode = http.GET();
 
   if (httpCode == 200) {
@@ -309,7 +316,7 @@ void setup() {
   drawImageWifi(5, 224);
   drawImagepwr(303, 224);
 
-  textWrite(25, 7, "BLIMAS", &lv_font_montserrat_20, 255, 255, 255);
+  textWrite(66, 7, "BLIMAS InSightor", &lv_font_montserrat_20, 254, 231, 21);
   textWrite(239, 105, "Humidity");
   textWrite(129, 105, "Water Level");
   textWrite(30, 105, "Temperature");
@@ -344,9 +351,11 @@ void setup() {
   lv_obj_align(wt3Label, LV_ALIGN_TOP_LEFT, 65, 186);
   lv_obj_set_style_text_font(wt3Label, &lv_font_montserrat_12, 0);
 
+/*
   button1();
   button2();
   button3();
+  */
 
   // Create clock label
   timeLabel = lv_label_create(lv_screen_active());
@@ -363,13 +372,10 @@ void setup() {
   digitalWrite(CYD_LED_GREEN, HIGH);
   digitalWrite(CYD_LED_BLUE, HIGH);
   digitalWrite(CYD_LED_RED, HIGH);
+  fetchData();
 }
 
 void loop() {
-  static unsigned long lastUpdate = 0;
-
-  if (millis() - lastUpdate > 1000) {
-    lastUpdate = millis();
     struct tm timeinfo;
     if (getLocalTime(&timeinfo)) {
       char timeStr[16];
@@ -390,11 +396,22 @@ void loop() {
     }
     lv_label_set_text(greetingLabel, greeting);
 
+    if (WiFi.status() != WL_CONNECTED) {
+      connectToWiFi();
+    }
+
+    if (isCaptivePortal()) {
+      Serial.println("Captive portal detected.");
+      loginToCaptivePortal(username, user_password, login_url);
+    } else {
+      Serial.println("Already authenticated!");
+    }
+    
     fetchData();
-  }
+
   
 
   lv_task_handler();
   lv_tick_inc(5);
-  delay(5);
+  delay(5*60*1000);
 }
