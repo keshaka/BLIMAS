@@ -85,6 +85,14 @@ BLIMAS/
        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
        INDEX idx_timestamp (timestamp)
    );
+
+   -- Create the battery_status table
+   CREATE TABLE IF NOT EXISTS battery_status (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      battery_percentage INT,
+      rssi INT
+   );
    ```
 
 3. **Configure Database Connection**
