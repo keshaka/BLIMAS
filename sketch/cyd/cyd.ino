@@ -10,8 +10,8 @@
 // WiFi credentials
 const char* ssid = "UoM_Wireless";
 const char* password = "";
-char username[64] = "konarakmrn.23";
-char user_password[64] = "Rn87ysh#16";
+char username[64] = "";
+char user_password[64] = "";
 char login_url[128] = "https://wlan.uom.lk/login.html";
 
 WiFiClientSecure client;
