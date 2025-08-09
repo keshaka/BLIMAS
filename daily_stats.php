@@ -11,7 +11,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 // Database connection parameters - UPDATE THESE WITH YOUR ACTUAL VALUES
 \$servername = "localhost";  // or your database host
 \$username = "root";  // Replace with actual username
-\$password = "Qwer3552";  // Replace with actual password
+\$password = "";  // Replace with actual password
 \$dbname = "blimas_db";   // Replace with actual database name
 
 // Return sample data function
