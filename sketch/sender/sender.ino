@@ -198,7 +198,6 @@ void loop() {
     sendLoRaData();
     delay(5000);
 
-    // Configure deep sleep
     Serial.println("Going to deep sleep...");
     esp_sleep_enable_timer_wakeup(sleepTime * 60 * 1000000);
     esp_deep_sleep_start();

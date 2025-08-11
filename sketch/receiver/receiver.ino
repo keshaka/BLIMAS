@@ -1,5 +1,3 @@
-// Modified BLIMAS Receiver with Hotspot and Data Relay + Web Interface
-
 #include "LoRaWan_APP.h"
 #include "Arduino.h"
 #include <WiFi.h>
@@ -9,10 +7,17 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include "HT_SSD1306Wire.h"
+#include "esp_sleep.h"
+#include <Preferences.h>
+
+// ======================= Persistent Storage =======================
+Preferences preferences;
+
+// ======================= Config Variables =========================
 
 // Access Point config
-const char* ap_ssid = "BLIMAS";
-const char* ap_password = "Qwer3552";
+char ap_ssid[32] = "BLIMAS";
+char ap_password[64] = "";
 
 // University WiFi config
 char uni_ssid[32] = "UoM_Wireless";
@@ -20,24 +25,21 @@ char uni_password[64] = "";
 
 // Captive portal login
 char login_url[128] = "https://wlan.uom.lk/login.html";
-char username[64] = "konarakmrn.23";
-char user_password[64] = "Rn87ysh#16";
+char username[64] = "";
+char user_password[64] = "";
 
 // Remote server
-char serverURL[128] = "https://blimas.site/upload.php";
+char serverURL[128] = "http://blimas.unilodge.live/upload.php";
 
-WiFiClientSecure client;
-WebServer server(80);
-SSD1306Wire mdisplay(0x3c, 500000, SDA_OLED, SCL_OLED, GEOMETRY_128_64, RST_OLED);
-
+// LoRa Parameters
 #define RF_FREQUENCY_DEFAULT 433300000
 #define TX_OUTPUT_POWER 14
 int LORA_SPREADING_FACTOR = 12;
 int LORA_BANDWIDTH = 0;
 int LORA_CODINGRATE = 1;
-
 long RF_FREQUENCY = RF_FREQUENCY_DEFAULT;
 
+// Other Globals
 char rxpacket[128];
 bool lora_idle = true;
 int16_t rssi;
@@ -46,10 +48,34 @@ int bat;
 static RadioEvents_t RadioEvents;
 bool apMode = true;
 
-// Global HTML and style definition
+#define sleepTime 3  // minutes
+
+// ======================= Hardware Objects =========================
+WiFiClientSecure client;
+WebServer server(80);
+SSD1306Wire mdisplay(0x3c, 500000, SDA_OLED, SCL_OLED, GEOMETRY_128_64, RST_OLED);
+
+// ======================= UI HTML Style ===========================
 const char* style = "<style>body{font-family:Arial;background:#f4f4f4;margin:0;padding:20px;}h1{color:#333;}form{background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}input[type=text],input[type=password]{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:4px;}input[type=submit]{background-color:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;}input[type=submit]:hover{background-color:#45a049}</style>";
 
-// handleConfigPage
+// ======================= Function Prototypes =====================
+void handleConfigPage();
+void handleSaveConfig();
+void setupHotspot();
+void stopHotspot();
+void connectToUniversityWiFi();
+bool isCaptivePortal();
+void disconnectWiFi();
+void loginToCaptivePortal(const char* username, const char* user_password, const char* login_url);
+void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi);
+void checkConnection();
+void setupWebServer();
+void handleRoot();
+void handleSetFreq();
+void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr);
+
+// ======================= Web Server Handlers =====================
+
 void handleConfigPage() {
   String html = "<html><head><title>Configuration</title>";
   html += style;
@@ -66,25 +92,84 @@ void handleConfigPage() {
   server.send(200, "text/html", html);
 }
 
-// Save config
 void handleSaveConfig() {
-  if (server.hasArg("ap_password")) strncpy((char*)ap_password, server.arg("ap_password").c_str(), sizeof(ap_password));
-  if (server.hasArg("username")) strncpy((char*)username, server.arg("username").c_str(), sizeof(username));
-  if (server.hasArg("user_password")) strncpy((char*)user_password, server.arg("user_password").c_str(), sizeof(user_password));
-  if (server.hasArg("freq")) RF_FREQUENCY = atol(server.arg("freq").c_str());
-  if (server.hasArg("bandwidth")) LORA_BANDWIDTH = atoi(server.arg("bandwidth").c_str());
-  if (server.hasArg("sf")) LORA_SPREADING_FACTOR = atoi(server.arg("sf").c_str());
-  if (server.hasArg("serverURL")) strncpy((char*)serverURL, server.arg("serverURL").c_str(), sizeof(serverURL));
+  preferences.begin("blimas", false); // Open NVS storage
+
+  if (server.hasArg("ap_password")) {
+    strncpy(ap_password, server.arg("ap_password").c_str(), sizeof(ap_password) - 1);
+    ap_password[sizeof(ap_password) - 1] = '\0';
+    preferences.putString("ap_password", ap_password);
+  }
+  if (server.hasArg("username")) {
+    strncpy(username, server.arg("username").c_str(), sizeof(username) - 1);
+    username[sizeof(username) - 1] = '\0';
+    preferences.putString("username", username);
+  }
+  if (server.hasArg("user_password")) {
+    strncpy(user_password, server.arg("user_password").c_str(), sizeof(user_password) - 1);
+    user_password[sizeof(user_password) - 1] = '\0';
+    preferences.putString("user_password", user_password);
+  }
+  if (server.hasArg("freq")) {
+    RF_FREQUENCY = atol(server.arg("freq").c_str());
+    preferences.putLong("freq", RF_FREQUENCY);
+  }
+  if (server.hasArg("bandwidth")) {
+    LORA_BANDWIDTH = atoi(server.arg("bandwidth").c_str());
+    preferences.putInt("bandwidth", LORA_BANDWIDTH);
+  }
+  if (server.hasArg("sf")) {
+    LORA_SPREADING_FACTOR = atoi(server.arg("sf").c_str());
+    preferences.putInt("sf", LORA_SPREADING_FACTOR);
+  }
+  if (server.hasArg("serverURL")) {
+    strncpy(serverURL, server.arg("serverURL").c_str(), sizeof(serverURL) - 1);
+    serverURL[sizeof(serverURL) - 1] = '\0';
+    preferences.putString("serverURL", serverURL);
+  }
+
+  preferences.end();
+
   Radio.SetChannel(RF_FREQUENCY);
   Radio.SetRxConfig(MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR, LORA_CODINGRATE, 0, 8, 0, false, 0, true, 0, 0, false, true);
   server.send(200, "text/html", "<html><body><h1>Settings Updated</h1><a href='/config'>Go Back</a></body></html>");
 }
 
+void handleRoot() {
+  String html = "<html><head><title>BLIMAS Data</title>";
+  html += style;
+  html += "</head><body><h1>Last Received Packet</h1><pre>" + String(rxpacket) + "</pre>";
+  html += "<a href='/config'>Edit Configuration</a><br><br>";
+  html += "</body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handleSetFreq() {
+  if (server.hasArg("freq")) {
+    RF_FREQUENCY = atol(server.arg("freq").c_str());
+    Radio.SetChannel(RF_FREQUENCY);
+    server.send(200, "text/html", "<html><body><h1>Frequency Updated</h1><p>New frequency: " + String(RF_FREQUENCY) + " Hz</p><a href='/'>Go Back</a></body></html>");
+    Serial.println("Frequency updated to: " + String(RF_FREQUENCY));
+  } else {
+    server.send(400, "text/html", "<html><body><h1>Missing Parameter</h1></body></html>");
+  }
+}
+
+void setupWebServer() {
+  server.on("/", handleRoot);
+  server.on("/config", handleConfigPage);
+  server.on("/saveconfig", HTTP_POST, handleSaveConfig);
+  server.begin();
+  Serial.println("Web server started on hotspot");
+}
+
+// ======================= Hotspot & WiFi =========================
+
 void setupHotspot() {
   WiFi.softAP(ap_ssid, ap_password);
   Serial.println("Hotspot started: blimas");
   IPAddress IP = WiFi.softAPIP();
-  Serial.println("AP IP address: ");
+  Serial.print("AP IP address: ");
   Serial.println(IP);
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Hotspot started.");
@@ -146,8 +231,6 @@ void disconnectWiFi() {
   Serial.println("Disconnected from WiFi");
 }
 
-void setupWebServer();
-
 void loginToCaptivePortal(const char* username, const char* user_password, const char* login_url) {
   client.setInsecure();
   HTTPClient https;
@@ -191,6 +274,8 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
   https.end();
 }
 
+// ======================= Data Upload & LoRa ======================
+
 void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi) {
   stopHotspot();
   connectToUniversityWiFi();
@@ -224,8 +309,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
         Serial.println("Captive portal detected. Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
         sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
-      }
-      else {
+      } else {
         mdisplay.drawString(0, 20, "Connections are OK!");
         mdisplay.drawString(0, 30, "But data upload failed.");
         mdisplay.display();
@@ -243,6 +327,8 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
   disconnectWiFi();
 }
 
+// ======================= Utility ================================
+
 void checkConnection() {
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Checking connections...");
@@ -256,10 +342,36 @@ void checkConnection() {
   disconnectWiFi();
 }
 
+// ======================= Main Program ===========================
+
 void setup() {
   Serial.begin(115200);
+
+  // Load saved settings
+  preferences.begin("blimas", true);
+  String ap_pwd = preferences.getString("ap_password", ap_password);
+  strncpy(ap_password, ap_pwd.c_str(), sizeof(ap_password) - 1);
+  ap_password[sizeof(ap_password) - 1] = '\0';
+
+  String user = preferences.getString("username", username);
+  strncpy(username, user.c_str(), sizeof(username) - 1);
+  username[sizeof(username) - 1] = '\0';
+
+  String user_pwd = preferences.getString("user_password", user_password);
+  strncpy(user_password, user_pwd.c_str(), sizeof(user_password) - 1);
+  user_password[sizeof(user_password) - 1] = '\0';
+
+  RF_FREQUENCY = preferences.getLong("freq", RF_FREQUENCY_DEFAULT);
+  LORA_BANDWIDTH = preferences.getInt("bandwidth", LORA_BANDWIDTH);
+  LORA_SPREADING_FACTOR = preferences.getInt("sf", LORA_SPREADING_FACTOR);
+
+  String srv = preferences.getString("serverURL", serverURL);
+  strncpy(serverURL, srv.c_str(), sizeof(serverURL) - 1);
+  serverURL[sizeof(serverURL) - 1] = '\0';
+
+  preferences.end();
+
   mdisplay.init();
-  //checkConnection();
   mdisplay.clear();
   mdisplay.drawString(0, 0, "Starting Hotspot...");
   mdisplay.display();
@@ -274,7 +386,7 @@ void setup() {
                     0, true, 0, 0, false, true);
   lora_idle = true;
   pinMode(LED ,OUTPUT);
-	digitalWrite(LED, LOW);
+  digitalWrite(LED, LOW);
 }
 
 void loop() {
@@ -286,6 +398,7 @@ void loop() {
   server.handleClient();
 }
 
+// ======================= LoRa Packet Handler ====================
 void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   digitalWrite(LED, HIGH);
   rssi = _rssi;
@@ -293,53 +406,25 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
   rxpacket[size] = 0;
   Radio.Sleep();
   Serial.printf("%s\n", rxpacket);
-  sscanf(rxpacket, "LM|3552|T1:%f,T2:%f,T3:%f,AirT:%f,H:%f,W:%f,B:%d",
-         &temp1, &temp2, &temp3, &tempDHT, &humidity, &distance, &bat);
-  Serial.printf("%d\n", bat);
-  mdisplay.clear();
-  mdisplay.drawString(0, 0, "Data received");
-  mdisplay.drawString(0, 10, "RSSI: " + String(rssi) + " dBm");
-  /*
-  mdisplay.drawString(0, 0, "Lake Monitor - RX");
-  mdisplay.drawString(0, 10, "Temp = " + String(tempDHT) + "Humidity = " + String(humidity));
-  mdisplay.drawString(0, 20, "Water level = " + String(distance));
-  mdisplay.drawString(0, 30, "Water temp = " + String(temp1) + ", " + String(temp2) + ", " + String(temp3));
-  mdisplay.drawString(0, 40, "battery: " + String(bat) + "%, RSSI: " + String(rssi) + " dBm");
-  */
-  mdisplay.display();
-  sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
-  setupHotspot();
-  lora_idle = true;
-  digitalWrite(LED, LOW);
-}
-
-void handleRoot() {
-  String html = "<html><head><title>BLIMAS Data</title>";
-  html += style;
-  html += "</head><body><h1>Last Received Packet</h1><pre>" + String(rxpacket) + "</pre>";
-  html += "<a href='/config'>Edit Configuration</a><br><br>";
-
-  html += "</body></html>";
-  server.send(200, "text/html", html);
-}
-
-
-void handleSetFreq() {
-  if (server.hasArg("freq")) {
-    RF_FREQUENCY = atol(server.arg("freq").c_str());
-    Radio.SetChannel(RF_FREQUENCY);
-    server.send(200, "text/html", "<html><body><h1>Frequency Updated</h1><p>New frequency: " + String(RF_FREQUENCY) + " Hz</p><a href='/'>Go Back</a></body></html>");
-    Serial.println("Frequency updated to: " + String(RF_FREQUENCY));
+  if (strncmp(rxpacket, "LM|3552|", 8) == 0) {
+    sscanf(rxpacket, "LM|3552|T1:%f,T2:%f,T3:%f,AirT:%f,H:%f,W:%f,B:%d",
+           &temp1, &temp2, &temp3, &tempDHT, &humidity, &distance, &bat);
+    Serial.printf("%d\n", bat);
+    mdisplay.clear();
+    mdisplay.drawString(0, 0, "Data received");
+    mdisplay.drawString(0, 10, "RSSI: " + String(rssi) + " dBm");
+    mdisplay.display();
+    delay(1000);
+    sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
+    lora_idle = true;
+    digitalWrite(LED, LOW);
+    Serial.printf("Going to deep sleep");
+    delay(1000);
+    esp_sleep_enable_timer_wakeup(sleepTime * 60 * 1000000);
+    esp_deep_sleep_start();
   } else {
-    server.send(400, "text/html", "<html><body><h1>Missing Parameter</h1></body></html>");
+    Serial.println("Invalid LoRa packet received");
+    lora_idle = true;
+    digitalWrite(LED, LOW);
   }
-}
-
-// Update setupWebServer function
-void setupWebServer() {
-  server.on("/", handleRoot);
-  server.on("/config", handleConfigPage);
-  server.on("/saveconfig", HTTP_POST, handleSaveConfig);
-  server.begin();
-  Serial.println("Web server started on hotspot");
 }
