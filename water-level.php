@@ -56,7 +56,7 @@
                             </div>
                             <div class="stat-content">
                                 <h4>Current</h4>
-                                <span class="stat-value" id="currentLevel">-- m</span>
+                                <span class="stat-value" id="currentLevel">-- cm</span>
                             </div>
                         </div>
                     </div>
@@ -67,7 +67,7 @@
                             </div>
                             <div class="stat-content">
                                 <h4>Highest</h4>
-                                <span class="stat-value" id="maxLevel">-- m</span>
+                                <span class="stat-value" id="maxLevel">-- cm</span>
                             </div>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                             </div>
                             <div class="stat-content">
                                 <h4>Lowest</h4>
-                                <span class="stat-value" id="minLevel">-- m</span>
+                                <span class="stat-value" id="minLevel">-- cm</span>
                             </div>
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                             </div>
                             <div class="stat-content">
                                 <h4>Average</h4>
-                                <span class="stat-value" id="avgLevel">-- m</span>
+                                <span class="stat-value" id="avgLevel">-- cm</span>
                             </div>
                         </div>
                     </div>

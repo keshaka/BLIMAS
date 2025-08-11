@@ -102,7 +102,7 @@ class WaterLevelChart {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Water Level (m)',
+                    label: 'Water Level (cm)',
                     data: chartData,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -151,7 +151,7 @@ class WaterLevelChart {
                         displayColors: true,
                         callbacks: {
                             label: function(context) {
-                                return `Water Level: ${context.parsed.y.toFixed(2)}m`;
+                                return `Water Level: ${context.parsed.y.toFixed(2)}cm`;
                             }
                         }
                     }
@@ -265,10 +265,10 @@ class WaterLevelChart {
         const min = Math.min(...levels);
         const avg = levels.reduce((sum, level) => sum + level, 0) / levels.length;
 
-        this.updateStatElement('currentLevel', current, ' m');
-        this.updateStatElement('maxLevel', max, ' m');
-        this.updateStatElement('minLevel', min, ' m');
-        this.updateStatElement('avgLevel', avg, ' m');
+        this.updateStatElement('currentLevel', current, ' cm');
+        this.updateStatElement('maxLevel', max, ' cm');
+        this.updateStatElement('minLevel', min, ' cm');
+        this.updateStatElement('avgLevel', avg, ' cm');
     }
 
     updateStatElement(elementId, value, unit) {
