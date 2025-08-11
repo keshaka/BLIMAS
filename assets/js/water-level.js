@@ -193,7 +193,7 @@ class WaterLevelChart {
                         },
                         title: {
                             display: true,
-                            text: 'Water Level (meters)',
+                            text: 'Water Level (centi meters)',
                             color: '#101820',
                             font: {
                                 weight: 'bold'
