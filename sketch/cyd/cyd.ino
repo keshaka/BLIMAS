@@ -8,7 +8,6 @@
 #include <ArduinoJson.h>
 #include <SPI.h>
 
-// Touchscreen pins
 #define XPT2046_IRQ 36   // T_IRQ
 #define XPT2046_MOSI 32  // T_DIN
 #define XPT2046_MISO 39  // T_OUT
@@ -59,8 +58,8 @@ lv_obj_t * progress_bar = NULL;
 // WiFi credentials
 const char* ssid = "UoM_Wireless";
 const char* password = "";
-char username[64] = "";
-char user_password[64] = "";
+char username[64] = "wijerathnarktp.23";
+char user_password[64] = "Tharusha@2003";
 char login_url[128] = "https://wlan.uom.lk/login.html";
 
 WiFiClientSecure client;
@@ -181,6 +180,7 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
   HTTPClient https;
   https.begin(client, login_url);
 
+  https.addHeader("User-Agent", "Mozilla/5.0 (ESP32; Heltec LoRa32 V3)");
   https.addHeader("Content-Type", "application/x-www-form-urlencoded");
   https.addHeader("Origin", "https://wlan.uom.lk");
   https.addHeader("Referer", "https://wlan.uom.lk/login.html?redirect=https://www.google.com/search");
@@ -331,8 +331,13 @@ void log_print(lv_log_level_t level, const char * buf) {
 }
 
 void fetchData(lv_timer_t * timer) {
+  if (isCaptivePortal()) {
+      if (WiFi.status() != WL_CONNECTED) {
+        connectToWiFi();
+      }
+  }
   HTTPClient http;
-  http.begin("https://blimas.site/cyd.php"); 
+  http.begin("http://blimas.unilodge.live/cyd.php"); 
   int httpCode = http.GET();
 
   if (httpCode == 200) {
@@ -374,7 +379,7 @@ void fetchData(lv_timer_t * timer) {
 void fetch_daily_stats(lv_timer_t * timer) {
   if (WiFi.status() == WL_CONNECTED && data_screen != NULL) {
     HTTPClient http;
-    http.begin("https://blimas.site/daily_stats.php");
+    http.begin("http://blimas.unilodge.live/daily_stats.php");
     int httpCode = http.GET();
 
     if (httpCode == 200) {
