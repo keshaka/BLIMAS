@@ -10,6 +10,9 @@
 #include "esp_sleep.h"
 #include <Preferences.h>
 
+#define VBAT_Read    1
+#define	ADC_Ctrl    37
+
 // ======================= Persistent Storage =======================
 Preferences preferences;
 
@@ -67,7 +70,7 @@ void connectToUniversityWiFi();
 bool isCaptivePortal();
 void disconnectWiFi();
 void loginToCaptivePortal(const char* username, const char* user_password, const char* login_url);
-void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi);
+void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi, int btrl);
 void checkConnection();
 void setupWebServer();
 void handleRoot();
@@ -276,7 +279,7 @@ void loginToCaptivePortal(const char* username, const char* user_password, const
 
 // ======================= Data Upload & LoRa ======================
 
-void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi) {
+void sendDataToServer(float temp1, float temp2, float temp3, float humidity, float tempDHT, float distance, int bat, int rssi, int btrl) {
   stopHotspot();
   connectToUniversityWiFi();
   if (WiFi.status() == WL_CONNECTED) {
@@ -286,7 +289,7 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
     String postData = "water_temp1=" + String(temp1) + "&water_temp2=" + String(temp2) +
                   "&water_temp3=" + String(temp3) + "&humidity=" + String(humidity) +
                   "&air_temp=" + String(tempDHT) + "&water_level=" + String(distance) +
-                  "&battery_level=" + String(bat) + "&rssi=" + String(rssi);
+                  "&battery_level=" + String(bat) + "&rssi=" + String(rssi) + "&btrl=" + String(btrl);
 
     int httpResponseCode = http.POST(postData);
     Serial.println("HTTP Response: " + String(httpResponseCode));
@@ -308,13 +311,14 @@ void sendDataToServer(float temp1, float temp2, float temp3, float humidity, flo
         mdisplay.display();
         Serial.println("Captive portal detected. Login to portal");
         loginToCaptivePortal(username, user_password, login_url);
-        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
+        sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi, btrl);
       } else {
         mdisplay.drawString(0, 20, "Connections are OK!");
         mdisplay.drawString(0, 30, "But data upload failed.");
         mdisplay.display();
         Serial.println("Connections are OK.");
         Serial.println("Data upload failed.");
+        ESP.restart();
       }
     }
     http.end();
@@ -340,6 +344,41 @@ void checkConnection() {
     mdisplay.display();
   }
   disconnectWiFi();
+}
+
+int voltageToPercent(float voltage) {
+  if (voltage >= 4.2) return 100;
+  else if (voltage >= 4.0) return 85 + (voltage - 4.0) * 75;
+  else if (voltage >= 3.85) return 60 + (voltage - 3.85) * 166;
+  else if (voltage >= 3.7) return 40 + (voltage - 3.7) * 133;
+  else if (voltage >= 3.5) return 15 + (voltage - 3.5) * 125;
+  else if (voltage >= 3.3) return 5 + (voltage - 3.3) * 50;
+  else return 0;
+}
+
+int readBatteryVoltage() {
+  // ADC resolution
+  const int resolution = 12;
+  const int adcMax = pow(2,resolution) - 1;
+  const float adcMaxVoltage = 3.3;
+  // On-board voltage divider
+  const int R1 = 390;
+  const int R2 = 100;
+  // Calibration measurements
+  const float measuredVoltage = 4.2;
+  const float reportedVoltage = 4.095;
+  // Calibration factor
+  const float factor = (adcMaxVoltage / adcMax) * ((R1 + R2)/(float)R2) * (measuredVoltage / reportedVoltage); 
+  digitalWrite(ADC_Ctrl,LOW);
+  delay(100);
+  int analogValue = analogRead(VBAT_Read);
+  digitalWrite(ADC_Ctrl,HIGH);
+
+  float floatVoltage = factor * analogValue;
+  uint16_t voltage = (int)(floatVoltage * 1000.0);
+  int batteryPercent = voltageToPercent(floatVoltage);
+  return batteryPercent;
+  //    delay(10000);
 }
 
 // ======================= Main Program ===========================
@@ -373,10 +412,13 @@ void setup() {
 
   mdisplay.init();
   mdisplay.clear();
-  mdisplay.drawString(0, 0, "Starting Hotspot...");
+  mdisplay.drawString(0, 0, "Blimas Receiver");
+  int btrl = readBatteryVoltage();
+  mdisplay.drawString(0, 20, "Batt RL: " + String(btrl) + "%");
   mdisplay.display();
-  setupHotspot();
-  setupWebServer();
+  mdisplay.display();
+  //setupHotspot();
+  //setupWebServer();
   Mcu.begin(HELTEC_BOARD, SLOW_CLK_TPYE);
   RadioEvents.RxDone = OnRxDone;
   Radio.Init(&RadioEvents);
@@ -387,6 +429,11 @@ void setup() {
   lora_idle = true;
   pinMode(LED ,OUTPUT);
   digitalWrite(LED, LOW);
+
+  pinMode(ADC_Ctrl,OUTPUT);
+  pinMode(VBAT_Read,INPUT);
+  //adcAttachPin(VBAT_Read);
+  analogReadResolution(12);
 }
 
 void loop() {
@@ -415,7 +462,8 @@ void OnRxDone(uint8_t* payload, uint16_t size, int16_t _rssi, int8_t snr) {
     mdisplay.drawString(0, 10, "RSSI: " + String(rssi) + " dBm");
     mdisplay.display();
     delay(1000);
-    sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi);
+    int btrl = readBatteryVoltage();
+    sendDataToServer(temp1, temp2, temp3, humidity, tempDHT, distance, bat, rssi, btrl);
     lora_idle = true;
     digitalWrite(LED, LOW);
     Serial.printf("Going to deep sleep");
